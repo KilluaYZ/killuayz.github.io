@@ -1,0 +1,1156 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Flakes Getting Start &#8212; Kernel Fuzzing Tutorial  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'nix/flakes/flake_getting_start';</script>
+    <link rel="canonical" href="https://nix.dev/nix/flakes/flake_getting_start.html" />
+    <link rel="shortcut icon" href="../../_static/favicon.png"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Contributing" href="../contributing/index.html" />
+    <link rel="prev" title="Flakes Introduction" href="flake_intro.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><div class="logo">
+  <a href="/">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <img src="/_static/img/linux.svg" alt="">
+      <span>Kernel Fuzzing</span>
+      <span>V0.11.0</span>
+    </div>
+  </a>
+</div>
+
+<iframe
+  src="https://ghbtns.com/github-btn.html?user=Killuayz&repo=Kernel-Fuzzing-Tutorial&type=star&count=true&size=large"
+  frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+
+<p>Notes about Kernel Fuzzing</p></div>
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../kernel/index.html">Kernel</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../kernel/linux/index.html">Linux Kernel</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../kernel/linux/tutorial/index.html">Linux Kernel Tutorial</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/compile_run/compile_run.html">Linux 内核的编译与运行</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/build_image/build_image.html">如何制作简单的Linux系统镜像</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/debug/debug_kernel.html">Linux内核调试</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/simple_driver/simple_driver.html">简单的驱动程序：VirtualDisk字符设备驱动</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/load_module/linux_kernel_load_module.html">如何让Linux内核编译驱动模块并且加载驱动模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/udev/udev.html">Linux的设备管理器——udev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/sysfs/sysfs.html">Sysfs介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/ebpf/ebpf.html">eBPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/ioctl/ioctl.html">系统调用ioctl介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/device_driver_arch/device_driver_arch.html">Linux设备驱动框架</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/xarray/xarray.html">基础数据结构介绍——XArray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/tutorial/globalmem_driver/globalmem_driver.html">globalmem 虚拟设备</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../kernel/linux/bugs/index.html">Linux Kernel Bugs</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/bugs/cve/CVE-2024-50274/CVE-2024-50274.html">CVE-2024-50274</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/bugs/cve/CVE-2024-43894/CVE-2024-43894.html">CVE-2024-43894</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/bugs/syzbot/gpf_drm_crtc_next_vblank_start/gpf_drm_crtc_next_vblank_start.html">general protection fault in drm_crtc_next_vblank_start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/bugs/syzbot/uaf_netdev_unregister_kobject/uaf_netdev_unregister_kobject.html">KASAN: use-after-free Read in netdev_unregister_kobject</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/bugs/syzbot/npd_read_ida_free/npd_read_ida_free.html">KASAN: null-ptr-deref Read in ida_free (4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../kernel/linux/bugs/syzbot/gpf_hci_abort_conn/gpf_hci_abort_conn.html">general protection fault in hci_abort_conn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../fuzzer/index.html">Fuzzer</a><input checked class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../fuzzer/syzkaller/index.html">SyzKaller</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../fuzzer/syzkaller/0-introduction/0-introduction.html">Syzkaller 介绍</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../simulator/index.html">Simulator</a><input checked class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../simulator/qemu/index.html">QEMU</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../simulator/qemu/0-how-to-use-kvm/0-how-to-use-kvm.html">如何使用KVM运行系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../simulator/qemu/1-how-to-share-directory/1-how-to-share-directory.html">如何在HOST和GUEST之间建立共享目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../simulator/qemu/2-how-to-connect-net/2-how-to-connect-net.html">QEMU中如何配置网络</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.html">如何使用QEMU/KVM运行MacOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html">在QEMU中加载自定义固件（firmware）失败</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../paper/index.html">Paper</a><input checked class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../paper/paper.html">Papers About Kernel Fuzzing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Nix</a><input checked class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../install-nix.html">Install Nix</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../tutorials/first-steps/index.html">First steps</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/first-steps/ad-hoc-shell-environments.html">Ad hoc shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/first-steps/reproducible-scripts.html">Reproducible interpreted scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/first-steps/declarative-shell.html">Declarative shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/first-steps/towards-reproducibility-pinning-nixpkgs.html">Towards reproducibility: pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/nix-language.html">Nix language basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/packaging-existing-software.html">Packaging existing software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/callpackage.html">Package parameters and overrides with <code class="docutils literal notranslate"><span class="pre">callPackage</span></code></a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/working-with-local-files.html">Working with local files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/cross-compilation.html">Cross compilation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../tutorials/module-system/index.html">Module system</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/module-system/a-basic-module/index.html">1. A basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/module-system/deep-dive.html">2. Module system deep dive</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../tutorials/nixos/index.html">NixOS</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/nixos-configuration-on-vm.html">NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/building-bootable-iso-image.html">Building a bootable ISO image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/building-and-running-docker-images.html">Building and running Docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/integration-testing-using-virtual-machines.html">Integration testing with NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/provisioning-remote-machines.html">Provisioning remote machines via SSH</a></li>
+
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/installing-nixos-on-a-raspberry-pi.html">Installing NixOS on a Raspberry Pi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/deploying-nixos-using-terraform.html">Deploying NixOS using Terraform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/binary-cache-setup.html">Setting up an HTTP binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tutorials/nixos/distributed-builds-setup.html">Setting up distributed builds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../guides/index.html">Guides</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../guides/recipes/index.html">Recipes</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guides/recipes/add-binary-cache.html">Configure Nix to use a custom binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guides/recipes/direnv.html">Automatic environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guides/recipes/sharing-dependencies.html">Dependencies in the development shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guides/recipes/dependency-management.html">Managing remote sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guides/recipes/python-environment.html">Python development environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guides/recipes/post-build-hook.html">Setting up post-build hooks</a></li>
+
+
+
+
+
+
+<li class="toctree-l4"><a class="reference internal" href="../guides/recipes/continuous-integration-github-actions.html">Continuous integration with GitHub Actions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/best-practices.html">Best practices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/glossary.html">Glossary</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/nix-manual.html">Nix reference manual</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/development/">Nix pre-release (development)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/latest/">Nix @nix-latest@ (latest)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/rolling/">Nix @nix-rolling@ (in Nixpkgs rolling)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/stable/">Nix @nix-stable@ (in Nixpkgs @nixpkgs-stable@)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/prev-stable/">Nix @nix-prev-stable@ (in Nixpkgs @nixpkgs-prev-stable@)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixpkgs/stable/">Nixpkgs manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixos/stable/">NixOS manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/">Community projects</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/awesome-nix">Support tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../recommended-reading.html">Further reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/pinning-nixpkgs.html">Pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../concepts/index.html">Concepts</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../concepts/flakes.html">Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../concepts/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="index.html">Flakes</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="flake_intro.html">Introduction to Flakes</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Getting Start</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../contributing/index.html">Contributing</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/how-to-contribute.html">How to contribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../contributing/how-to-get-help.html">How to get help</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../contributing/documentation/index.html">Contributing documentation</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../contributing/documentation/resources.html">Documentation resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../contributing/documentation/diataxis.html">Documentation framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../contributing/documentation/style-guide.html">Style guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../contributing/documentation/writing-a-tutorial.html">How to write a tutorial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../acknowledgments/index.html">Acknowledgements</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../acknowledgments/sponsors.html">Sponsors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../wiki/index.html">Wiki</a><input checked class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/0-drm/drm.html">DRM介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/1-nix_with_glibc_compile_error/nix_with_glibc_compile_error.html">Nix打包项目时遇到Cannot find stdlib.h</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/2-nix_golang_get_proxy_connection_refused/nix_golang_get_proxy_connection_refused.html">使用Nix打包Golang项目时报出错误<code class="docutils literal notranslate"><span class="pre">Connection</span> <span class="pre">Refused</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/3-perf_event_open/perf_event_open.html">perf_event_open 函数介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/4-compile_v4.x_undefined_ilog2_NaN/compile_v4.x_undefined_ilog2_NaN.html">在编译linux内核v4.x错误undefined reference to `____ilog2_NaN’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/5-compile_linux_modules/compile_linux_modules.html">如何编译Linux的全部模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/6-specific_keyring_file_not_found/specific_keyring_file_not_found.html">编译时遇到specified keyring file xxx not found</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/7-cannot_insert_hardware_breakpoint/cannot_insert_hardware_breakpoint.html">Cannot insert hardware breakpoint 11:Remote failure reply: 22.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../wiki/8-employ-own-overleaf/employ_own_overleaf.html">部署自己的Overleaf</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial/issues/new?title=Issue%20on%20page%20%2Fnix/flakes/flake_getting_start.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/nix/flakes/flake_getting_start.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Flakes Getting Start</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">简介</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#warning">Warning⚠️（程序员看过来）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">隐私泄露警告</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#git">Git警告</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flakes">如何开启Flakes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flake-schema">Flake Schema</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#input-schema">Input Schema</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-schema">Output Schema</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nixosflakes">在NixOS中全面使用Flakes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nixos">传统的NixOS管理方式</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">启用NixOS的Flakes支持</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">将系统配置切换到使用flakes管理</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nix-shell">更高效地使用<code class="docutils literal notranslate"><span class="pre">nix-shell</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-your-evaluations-pure">确保评估过程的纯粹性（Making your evaluations pure）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flakenixpkgs">在Flake中从多个nixpkgs分支引入包</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nix-flake">nix flake的子命令</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="flakes-getting-start">
+<span id="id1"></span><h1>Flakes Getting Start<a class="headerlink" href="#flakes-getting-start" title="Permalink to this heading">#</a></h1>
+<section id="id2">
+<h2>简介<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
+<blockquote>
+<div><p>参考文章，侵权必删：</p>
+<p>[1] <a class="reference external" href="https://xeiaso.net/blog/nix-flakes-1-2022-02-21/">https://xeiaso.net/blog/nix-flakes-1-2022-02-21/</a></p>
+<p>[2] <a class="reference external" href="https://nixos-and-flakes.thiscute.world/zh/">https://nixos-and-flakes.thiscute.world/zh/</a></p>
+<p>[3] <a class="reference external" href="https://wiki.nixos.org/wiki/Flakes">https://wiki.nixos.org/wiki/Flakes</a></p>
+</div></blockquote>
+<p>Nix是一个包管理器，它允许您对软件依赖关系和构建过程有一个更确定的视图。它最大的缺点之一是关于使用Nix的项目应该如何协同工作的约定很少。这就像拥有一个构建系统，但也必须自己配置系统来运行软件。这可能意味着从项目的git仓库中复制一个NixOS模块，自己编写或更多。与此相反，Nix Flakes定义了一组关于如何构建、运行、集成和部署软件的约定，而不必依赖于外部工具（如Niv或Lorri）来帮助您及时完成基本任务。这将是一系列相互依存的帖子。这篇文章将是Nix Flakes的介绍，并作为一个“我为什么要关心？”风格的概述，你可以用 Flakes做什么，而不需要过多的细节。其中大多数将会有单独的帖子（有些帖子不止一个）。</p>
+<p>使用Flakes有以下好处：</p>
+<ul class="simple">
+<li><p>Flakes将项目模板添加到Nix中</p></li>
+<li><p>Flakes定义了一种标准的方式来表示“这是一个可以运行的程序”</p></li>
+<li><p>Flakes将开发环境整合到项目配置中</p></li>
+<li><p>Flakes可以轻松地从外部git仓库拉入依赖项</p></li>
+<li><p>Flakes操作简单，不会使用的Flakes人也可以轻松使用Flakes提供的功能</p></li>
+<li><p>Flakes支持私有git仓库</p></li>
+<li><p>Flakes允许您在定义应用程序代码的同时定义系统配置</p></li>
+<li><p>Flakes允许您将配置存储库的git hash嵌入到部署的机器中</p></li>
+</ul>
+</section>
+<section id="warning">
+<h2>Warning⚠️（程序员看过来）<a class="headerlink" href="#warning" title="Permalink to this heading">#</a></h2>
+<section id="id3">
+<h3>隐私泄露警告<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h3>
+<p>由于flake文件的内容被复制到全球可读的Nix存储文件夹，因此不要在flake文件中放入任何未加密的秘密。相反，您应该使用秘密管理方案。</p>
+</section>
+<section id="git">
+<h3>Git警告<a class="headerlink" href="#git" title="Permalink to this heading">#</a></h3>
+<p>如果Flake处于一个git仓库中，那么只有被加入到工作树（working tree）中的文件会被拷贝到store文件夹下进行编译。所以，如果要使用git来管理你的flake项目，在构建flake项目之前，需要使用<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span></code> 将文件都添加到工作树（working tree）中。</p>
+</section>
+</section>
+<section id="flakes">
+<h2>如何开启Flakes<a class="headerlink" href="#flakes" title="Permalink to this heading">#</a></h2>
+<p>Flakes是Nix的一个实验特性，因此默认并不开启，如果想要开启，则需要进行以下操作。</p>
+<p><strong>临时开启</strong></p>
+<p>可以在使用<code class="docutils literal notranslate"><span class="pre">nix</span></code>命令时通过添加命令行参数临时开启：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">--experimental-features &#39;nix-command flakes&#39;</span>
+</pre></div>
+</div>
+<p><strong>在NixOS中永久开启</strong></p>
+<p>在<code class="docutils literal notranslate"><span class="pre">/etc/nixos/configuration.nix</span></code>中添加：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>nix<span class="o">.</span>settings<span class="o">.</span><span class="ss">experimental-features =</span> <span class="p">[</span> <span class="s2">&quot;nix-command&quot;</span> <span class="s2">&quot;flakes&quot;</span> <span class="p">];</span>
+</pre></div>
+</div>
+<p><strong>在单独安装的nix包管理器中永久开启</strong></p>
+<p>在<code class="docutils literal notranslate"><span class="pre">/etc/nix/nix.conf</span></code>（对所有用户都生效）或<code class="docutils literal notranslate"><span class="pre">~/.config/nix/nix.conf</span></code>（仅对当前用户生效）中添加：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">experimental</span><span class="o">-</span><span class="n">features</span> <span class="o">=</span> <span class="n">nix</span><span class="o">-</span><span class="n">command</span> <span class="n">flakes</span>
+</pre></div>
+</div>
+</section>
+<section id="flake-schema">
+<h2>Flake Schema<a class="headerlink" href="#flake-schema" title="Permalink to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">flake.nix</span></code>也是一个Nix文件，但是它有更多的限制和规范。Old Nix规范和限制较少，因此“一千个人就有一千个Nix配置文件”，相比之下，Flake为了提供更容易理解，更统一的配置，就有更多的规范。总的来说，Flakes有4个最顶层的属性集：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">description</span></code>是一个string，它描述了该flake的基本信息</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">input</span></code>是一个属性集，它记录了该flake的所有依赖项</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">outputs</span></code>是一个参数的函数，该参数接受所有已实现输入的属性集，并输出另一个属性集，其模式将在下面描述</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nixConfig</span></code>是一个属性集，它反映了赋予给<code class="docutils literal notranslate"><span class="pre">nix.conf</span></code>的值。这可以通过添加特定于薄片的配置（例如二进制缓存）来扩展用户nix体验的正常行为</p></li>
+</ul>
+<section id="input-schema">
+<h3>Input Schema<a class="headerlink" href="#input-schema" title="Permalink to this heading">#</a></h3>
+<p>Input属性定义了一个flake的依赖项。举个例子，为了能够正确地编译系统，nixpkgs必须要被定义为其中的依赖项。这些依赖项会在被拉取后，作为参数传递给<code class="docutils literal notranslate"><span class="pre">outputs</span></code>函数。</p>
+<p><code class="docutils literal notranslate"><span class="pre">inputs</span></code>的每一项依赖有许多类型与定义方式，可以是另一个flake，可以是一个普通的git仓库，也可以是一个本地路径。</p>
+<p>Nixpkgs可以使用如下方式定义：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># NixOS官方软件源，使用了nixos-24.11分支（当然可以换别的分支）</span>
+<span class="linenos">2</span>inputs<span class="o">.</span>nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:NixOS/nixpkgs/nixos-24.11&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>如果要将Hyprland作为输入，那么需要添加以下代码：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>inputs<span class="o">.</span>hyprland<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:hyprwm/Hyprland&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>如果你想要Hyprland遵循nixpkgs的输入，以避免有多个nixpkgs的版本，你可以使用以下代码：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>inputs<span class="o">.</span>hyprland<span class="o">.</span>inputs<span class="o">.</span>nixpkgs<span class="o">.</span><span class="ss">follows =</span> <span class="s2">&quot;nixpkgs&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>我们可以将如上配置进行简化，提升其易读性：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="ss">inputs =</span> <span class="p">{</span>
+<span class="linenos">2</span>    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:NixOS/nixpkgs/&lt;branch name&gt;&quot;</span><span class="p">;</span>
+<span class="linenos">3</span>    <span class="ss">hyprland =</span> <span class="p">{</span>
+<span class="linenos">4</span>        <span class="ss">url =</span> <span class="s2">&quot;github:hyprwm/Hyprland&quot;</span><span class="p">;</span>
+<span class="linenos">5</span>        inputs<span class="o">.</span>nixpkgs<span class="o">.</span><span class="ss">follows =</span> <span class="s2">&quot;nixpkgs&quot;</span><span class="p">;</span>
+<span class="linenos">6</span>    <span class="p">};</span>
+<span class="linenos">7</span><span class="p">};</span>
+</pre></div>
+</div>
+<p>此外<code class="docutils literal notranslate"><span class="pre">inputs</span></code>还支持很多别的类型的依赖，举例如下：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="p">{</span>
+<span class="linenos"> 2</span>  <span class="ss">inputs =</span> <span class="p">{</span>
+<span class="linenos"> 3</span>    <span class="c1"># 以 GitHub 仓库为数据源，指定使用 master 分支，这是最常见的 input 格式</span>
+<span class="linenos"> 4</span>    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:Mic92/nixpkgs/master&quot;</span><span class="p">;</span>
+<span class="linenos"> 5</span>    <span class="c1"># Git URL，可用于任何基于 https/ssh 协议的 Git 仓库</span>
+<span class="linenos"> 6</span>    git-example<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;git+https://git.somehost.tld/user/path?ref=branch&quot;</span><span class="p">;</span>
+<span class="linenos"> 7</span>    <span class="c1"># 同样是拉取 Git 仓库，但使用 ssh 协议 + 密钥认证，同时使用了 shallow=1 参数避免复制 .git</span>
+<span class="linenos"> 8</span>    ssh-git-example<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;git+ssh://git@github.com/ryan4yin/nix-secrets.git?shallow=1&quot;</span><span class="p">;</span>
+<span class="linenos"> 9</span>    <span class="c1"># Archive File URL, needed in case your input use LFS.</span>
+<span class="linenos">10</span>    <span class="c1"># Regular git input doesn&#39;t support LFS yet.</span>
+<span class="linenos">11</span>    git-example-lfs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;https://codeberg.org/solver-orgz/treedome/archive/master.tar.gz&quot;</span><span class="p">;</span>
+<span class="linenos">12</span>    <span class="c1"># 当然也可以直接依赖本地的 git 仓库</span>
+<span class="linenos">13</span>    git-directory-example<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;git+file:/path/to/repo?shallow=1&quot;</span><span class="p">;</span>
+<span class="linenos">14</span>    <span class="c1"># 使用 `dir` 参数指定某个子目录</span>
+<span class="linenos">15</span>    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:foo/bar?dir=shu&quot;</span><span class="p">;</span>
+<span class="linenos">16</span>    <span class="c1"># 本地文件夹 (如果使用绝对路径，可省略掉前缀 &#39;path:&#39;)</span>
+<span class="linenos">17</span>    directory-example<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;path:/path/to/repo&quot;</span><span class="p">;</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>    <span class="c1"># 如果数据源不是一个 flake，则需要设置 flake=false</span>
+<span class="linenos">20</span>    <span class="c1"># `flake=false` 通常被用于引入一些额外的源代码、配置文件等</span>
+<span class="linenos">21</span>    <span class="c1"># 在 nix 代码中可以直接通过 &quot;${inputs.bar}/xxx/xxx&quot; 的方式来引用其中的文件</span>
+<span class="linenos">22</span>    <span class="c1"># 比如说通过 `import &quot;${inputs.bar}/xxx/xxx.nix&quot;` 来导入其中的 nix 文件</span>
+<span class="linenos">23</span>    <span class="c1"># 或者直接将 &quot;${inputs.bar}/xx/xx&quot; 当作某些 option 的路径参数使用</span>
+<span class="linenos">24</span>    <span class="ss">bar =</span> <span class="p">{</span>
+<span class="linenos">25</span>      <span class="ss">url =</span> <span class="s2">&quot;github:foo/bar/branch&quot;</span><span class="p">;</span>
+<span class="linenos">26</span>      <span class="ss">flake =</span> <span class="no">false</span><span class="p">;</span>
+<span class="linenos">27</span>    <span class="p">};</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span>    <span class="ss">sops-nix =</span> <span class="p">{</span>
+<span class="linenos">30</span>      <span class="ss">url =</span> <span class="s2">&quot;github:Mic92/sops-nix&quot;</span><span class="p">;</span>
+<span class="linenos">31</span>      <span class="c1"># `follows` 是 inputs 中的继承语法</span>
+<span class="linenos">32</span>      <span class="c1"># 这里使 sops-nix 的 `inputs.nixpkgs` 与当前 flake 的 inputs.nixpkgs 保持一致，</span>
+<span class="linenos">33</span>      <span class="c1"># 避免依赖的 nixpkgs 版本不一致导致问题</span>
+<span class="linenos">34</span>      inputs<span class="o">.</span>nixpkgs<span class="o">.</span><span class="ss">follows =</span> <span class="s2">&quot;nixpkgs&quot;</span><span class="p">;</span>
+<span class="linenos">35</span>    <span class="p">};</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span>    <span class="c1"># 将 flake 锁定在某个 commit 上</span>
+<span class="linenos">38</span>    <span class="ss">nix-doom-emacs =</span> <span class="p">{</span>
+<span class="linenos">39</span>      <span class="ss">url =</span> <span class="s2">&quot;github:vlaci/nix-doom-emacs?rev=238b18d7b2c8239f676358634bfb32693d3706f3&quot;</span><span class="p">;</span>
+<span class="linenos">40</span>      <span class="ss">flake =</span> <span class="no">false</span><span class="p">;</span>
+<span class="linenos">41</span>    <span class="p">};</span>
+<span class="linenos">42</span>  <span class="p">};</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span>  <span class="ss">outputs =</span> <span class="p">{</span> self<span class="p">,</span> <span class="o">...</span> <span class="p">}@</span>inputs<span class="p">:</span> <span class="p">{</span> <span class="o">...</span> <span class="p">};</span>
+<span class="linenos">45</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="output-schema">
+<h3>Output Schema<a class="headerlink" href="#output-schema" title="Permalink to this heading">#</a></h3>
+<p>一旦input完成解析，input就会被传到函数<code class="docutils literal notranslate"><span class="pre">outputs</span></code>中，例如<code class="docutils literal notranslate"><span class="pre">nixpkgs</span></code>在<code class="docutils literal notranslate"><span class="pre">inputs</span></code>中被定义之后，就可以在后面的<code class="docutils literal notranslate"><span class="pre">outputs</span></code>函数的参数中使用此依赖项中的内容了。此外传入的参数还有<code class="docutils literal notranslate"><span class="pre">self</span></code>，这个self是该flake在store中的目录。<code class="docutils literal notranslate"><span class="pre">outputs</span></code>会根据以下模式返回flake的输出，这个输出结果是一个attribute set，一些特定名称的<code class="docutils literal notranslate"><span class="pre">outputs</span></code>会有特殊的用途，会被某些Nix命令识别处理，换言之不同的命令会执行outputs中不同的attribute set，进而执行不同的操作。</p>
+<p>其中：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;system&gt;</span></code>是系统的架构和操作系统的描述，例如<code class="docutils literal notranslate"><span class="pre">x86_64-linux</span></code>，<code class="docutils literal notranslate"><span class="pre">aarch64-linux</span></code>等</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;</span></code>是属性名，例如”hello”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;flake&gt;</span></code>是一个flake的名字，例如”nixpkgs”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">store-path</span></code>是一个<code class="docutils literal notranslate"><span class="pre">/nix/store...</span></code>目录</p></li>
+</ul>
+<p>下面是一个<code class="docutils literal notranslate"><span class="pre">outputs</span></code>中保留的特殊属性集，当我们执行不同的命令时，nix就会在outputs返回的属性集中选择对应的derivation执行：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="p">{</span> self<span class="p">,</span> <span class="o">...</span> <span class="p">}@</span>inputs<span class="p">:</span>
+<span class="linenos"> 2</span><span class="p">{</span>
+<span class="linenos"> 3</span>  <span class="c1"># Executed by `nix flake check`</span>
+<span class="linenos"> 4</span>  checks<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos"> 5</span>  <span class="c1"># Executed by `nix build .#&lt;name&gt;`</span>
+<span class="linenos"> 6</span>  packages<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos"> 7</span>  <span class="c1"># Executed by `nix build .`</span>
+<span class="linenos"> 8</span>  packages<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="ss">default =</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos"> 9</span>  <span class="c1"># Executed by `nix run .#&lt;name&gt;`</span>
+<span class="linenos">10</span>  apps<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">11</span>    <span class="ss">type =</span> <span class="s2">&quot;app&quot;</span><span class="p">;</span>
+<span class="linenos">12</span>    <span class="ss">program =</span> <span class="s2">&quot;&lt;store-path&gt;&quot;</span><span class="p">;</span>
+<span class="linenos">13</span>  <span class="p">};</span>
+<span class="linenos">14</span>  <span class="c1"># Executed by `nix run . -- &lt;args?&gt;`</span>
+<span class="linenos">15</span>  apps<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="ss">default =</span> <span class="p">{</span> <span class="ss">type =</span> <span class="s2">&quot;app&quot;</span><span class="p">;</span> <span class="ss">program =</span> <span class="s2">&quot;...&quot;</span><span class="p">;</span> <span class="p">};</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span>  <span class="c1"># Formatter (alejandra, nixfmt or nixpkgs-fmt)</span>
+<span class="linenos">18</span>  formatter<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span> <span class="o">=</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos">19</span>  <span class="c1"># Used for nixpkgs packages, also accessible via `nix build .#&lt;name&gt;`</span>
+<span class="linenos">20</span>  legacyPackages<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos">21</span>  <span class="c1"># Overlay, consumed by other flakes</span>
+<span class="linenos">22</span>  overlays<span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span> <span class="p">};</span>
+<span class="linenos">23</span>  <span class="c1"># Default overlay</span>
+<span class="linenos">24</span>  overlays<span class="o">.</span><span class="ss">default =</span> final<span class="p">:</span> prev<span class="p">:</span> <span class="p">{</span> <span class="p">};</span>
+<span class="linenos">25</span>  <span class="c1"># Nixos module, consumed by other flakes</span>
+<span class="linenos">26</span>  nixosModules<span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> <span class="p">{</span> config<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span> <span class="p">{</span> <span class="ss">options =</span> <span class="p">{};</span> <span class="ss">config =</span> <span class="p">{};</span> <span class="p">};</span>
+<span class="linenos">27</span>  <span class="c1"># Default module</span>
+<span class="linenos">28</span>  nixosModules<span class="o">.</span><span class="ss">default =</span> <span class="p">{</span> config<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span> <span class="p">{</span> <span class="ss">options =</span> <span class="p">{};</span> <span class="ss">config =</span> <span class="p">{};</span> <span class="p">};</span>
+<span class="linenos">29</span>  <span class="c1"># Used with `nixos-rebuild switch --flake .#&lt;hostname&gt;`</span>
+<span class="linenos">30</span>  <span class="c1"># nixosConfigurations.&quot;&lt;hostname&gt;&quot;.config.system.build.toplevel must be a derivation</span>
+<span class="linenos">31</span>  nixosConfigurations<span class="o">.</span><span class="s2">&quot;&lt;hostname&gt;&quot;</span> <span class="o">=</span> <span class="p">{};</span>
+<span class="linenos">32</span>  <span class="c1"># Used by `nix develop .#&lt;name&gt;`</span>
+<span class="linenos">33</span>  devShells<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos">34</span>  <span class="c1"># Used by `nix develop`</span>
+<span class="linenos">35</span>  devShells<span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span><span class="o">.</span><span class="ss">default =</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos">36</span>  <span class="c1"># Hydra build jobs</span>
+<span class="linenos">37</span>  hydraJobs<span class="o">.</span><span class="s2">&quot;&lt;attr&gt;&quot;</span><span class="o">.</span><span class="s2">&quot;&lt;system&gt;&quot;</span> <span class="o">=</span> <span class="nb">derivation</span><span class="p">;</span>
+<span class="linenos">38</span>  <span class="c1"># Used by `nix flake init -t &lt;flake&gt;#&lt;name&gt;`</span>
+<span class="linenos">39</span>  templates<span class="o">.</span><span class="s2">&quot;&lt;name&gt;&quot;</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">40</span>    <span class="ss">path =</span> <span class="s2">&quot;&lt;store-path&gt;&quot;</span><span class="p">;</span>
+<span class="linenos">41</span>    <span class="ss">description =</span> <span class="s2">&quot;template description goes here?&quot;</span><span class="p">;</span>
+<span class="linenos">42</span>  <span class="p">};</span>
+<span class="linenos">43</span>  <span class="c1"># Used by `nix flake init -t &lt;flake&gt;`</span>
+<span class="linenos">44</span>  templates<span class="o">.</span><span class="ss">default =</span> <span class="p">{</span> <span class="ss">path =</span> <span class="s2">&quot;&lt;store-path&gt;&quot;</span><span class="p">;</span> <span class="ss">description =</span> <span class="s2">&quot;&quot;</span><span class="p">;</span> <span class="p">};</span>
+<span class="linenos">45</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>以我们下面这个具体的flake配置文件为例：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="p">{</span>
+<span class="linenos"> 2</span>  <span class="ss">description =</span> <span class="s2">&quot;A simple NixOS flake&quot;</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span>  <span class="ss">inputs =</span> <span class="p">{</span>
+<span class="linenos"> 5</span>    <span class="c1"># NixOS 官方软件源，这里使用 nixos-24.11 分支</span>
+<span class="linenos"> 6</span>    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:NixOS/nixpkgs/nixos-24.11&quot;</span><span class="p">;</span>
+<span class="linenos"> 7</span>  <span class="p">};</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>  <span class="ss">outputs =</span> <span class="p">{</span> self<span class="p">,</span> nixpkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}@</span>inputs<span class="p">:</span> <span class="p">{</span>
+<span class="linenos">10</span>    <span class="c1"># hostname 为 my-nixos 的主机会使用这个配置</span>
+<span class="linenos">11</span>    nixosConfigurations<span class="o">.</span><span class="ss">my-nixos =</span> nixpkgs<span class="o">.</span>lib<span class="o">.</span>nixosSystem <span class="p">{</span>
+<span class="linenos">12</span>      <span class="ss">system =</span> <span class="s2">&quot;x86_64-linux&quot;</span><span class="p">;</span>
+<span class="linenos">13</span>      <span class="ss">modules =</span> <span class="p">[</span>
+<span class="linenos">14</span>        <span class="o">.</span><span class="l">/configuration.nix</span>
+<span class="linenos">15</span>      <span class="p">];</span>
+<span class="linenos">16</span>    <span class="p">};</span>
+<span class="linenos">17</span>  <span class="p">};</span>
+<span class="linenos">18</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>在众多的attribute set中，我们选择了<code class="docutils literal notranslate"><span class="pre">nixosConfigurations</span></code>这个，它用于配置NixOS系统。也就是说，当我们运行<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">nixos-rebuild</span> <span class="pre">switch</span></code>命令时，它会从<code class="docutils literal notranslate"><span class="pre">/etc/nixos/flake.nix</span></code>的<code class="docutils literal notranslate"><span class="pre">outputs</span></code>函数返回值中查找<code class="docutils literal notranslate"><span class="pre">nixosConfigurations.&lt;hostname&gt;</span></code>一项，并使用其中的定义来配置NixOS系统。</p>
+<p>当然我们也可以指定<code class="docutils literal notranslate"><span class="pre">--flake</span></code>参数来告诉NixOS应该选择哪个flake.nix文件作为模板进行配置。其中<code class="docutils literal notranslate"><span class="pre">&lt;host-name&gt;</span></code>是主机名，如果没有指定，则nix会默认以当前系统的hostname为配置名进行查找。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo nixos-rebuild switch --flake /path/to/your/flake#&lt;host-name&gt;</span>
+</pre></div>
+</div>
+<p>nix非常强大，我们能够引用一个远程的GitHub仓库作为flake的来源，示例如下：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo nixos-rebuild switch --flake github:owner/repo#&lt;host-name&gt;</span>
+</pre></div>
+</div>
+<p>值得注意的是，<code class="docutils literal notranslate"><span class="pre">outputs</span></code>函数中还有一个特殊的参数<code class="docutils literal notranslate"><span class="pre">self</span></code>。官方文档对其描述是：</p>
+<blockquote>
+<div><p>The special input named <code class="docutils literal notranslate"><span class="pre">self</span></code> refers to the outputs and source tree of this flake.</p>
+</div></blockquote>
+<p>所以说，<code class="docutils literal notranslate"><span class="pre">self</span></code>是当前的flake的<code class="docutils literal notranslate"><span class="pre">outputs</span></code>函数的返回值，同时也是当前flake源码的文件夹路径（source tree）。</p>
+</section>
+</section>
+<section id="nixosflakes">
+<h2>在NixOS中全面使用Flakes<a class="headerlink" href="#nixosflakes" title="Permalink to this heading">#</a></h2>
+<blockquote>
+<div><p>该章节内容搬运自: <a class="reference external" href="https://nixos-and-flakes.thiscute.world/zh/nixos-with-flakes/get-started-with-nixos">https://nixos-and-flakes.thiscute.world/zh/nixos-with-flakes/get-started-with-nixos</a></p>
+</div></blockquote>
+<section id="nixos">
+<h3>传统的NixOS管理方式<a class="headerlink" href="#nixos" title="Permalink to this heading">#</a></h3>
+<p>传统的NixOS需要用户配置<code class="docutils literal notranslate"><span class="pre">/etc/nixos/configuration.nix</span></code>文件，从而修改系统配置。传统的Nix配置方式依赖<code class="docutils literal notranslate"><span class="pre">nix-channel</span></code>配置的数据源，没有任何的版本锁定机制，进而也无法保证系统的可复现性。</p>
+<p>下面我们将阐述，如何从传统的Nix配置过渡到Flakes。</p>
+<p>以我们要配置一个用户ryan，启用ssh为例，我们只需要在<code class="docutils literal notranslate"><span class="pre">/etc/nixos/configuration.nix</span></code>中进行以下修改：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># Edit this configuration file to define what should be installed on</span>
+<span class="linenos"> 2</span><span class="c1"># your system.  Help is available in the configuration.nix(5) man page</span>
+<span class="linenos"> 3</span><span class="c1"># and in the NixOS manual (accessible by running ‘nixos-help’).</span>
+<span class="linenos"> 4</span><span class="p">{</span> config<span class="p">,</span> pkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="p">{</span>
+<span class="linenos"> 7</span>  <span class="ss">imports =</span>
+<span class="linenos"> 8</span>    <span class="p">[</span> <span class="c1"># Include the results of the hardware scan.</span>
+<span class="linenos"> 9</span>      <span class="o">.</span><span class="l">/hardware-configuration.nix</span>
+<span class="linenos">10</span>    <span class="p">];</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span>  <span class="c1"># 省略掉前面的配置......</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span>  <span class="c1"># 新增用户 ryan</span>
+<span class="linenos">15</span>  users<span class="o">.</span>users<span class="o">.</span><span class="ss">ryan =</span> <span class="p">{</span>
+<span class="linenos">16</span>    <span class="ss">isNormalUser =</span> <span class="no">true</span><span class="p">;</span>
+<span class="linenos">17</span>    <span class="ss">description =</span> <span class="s2">&quot;ryan&quot;</span><span class="p">;</span>
+<span class="linenos">18</span>    <span class="ss">extraGroups =</span> <span class="p">[</span> <span class="s2">&quot;networkmanager&quot;</span> <span class="s2">&quot;wheel&quot;</span> <span class="p">];</span>
+<span class="linenos">19</span>    openssh<span class="o">.</span>authorizedKeys<span class="o">.</span><span class="ss">keys =</span> <span class="p">[</span>
+<span class="linenos">20</span>        <span class="c1"># replace with your own public key</span>
+<span class="linenos">21</span>        <span class="s2">&quot;ssh-ed25519 &lt;some-public-key&gt; ryan@ryan-pc&quot;</span>
+<span class="linenos">22</span>    <span class="p">];</span>
+<span class="linenos">23</span>    <span class="ss">packages =</span> <span class="k">with</span> pkgs<span class="p">;</span> <span class="p">[</span>
+<span class="linenos">24</span>      firefox <span class="c1"># 给当前用户添加浏览器firefox</span>
+<span class="linenos">25</span>    <span class="c1">#  thunderbird</span>
+<span class="linenos">26</span>    <span class="p">];</span>
+<span class="linenos">27</span>  <span class="p">};</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span>  <span class="c1"># 启用 OpenSSH 后台服务</span>
+<span class="linenos">30</span>  services<span class="o">.</span><span class="ss">openssh =</span> <span class="p">{</span>
+<span class="linenos">31</span>    <span class="ss">enable =</span> <span class="no">true</span><span class="p">;</span>
+<span class="linenos">32</span>    <span class="ss">settings =</span> <span class="p">{</span>
+<span class="linenos">33</span>      <span class="ss">X11Forwarding =</span> <span class="no">true</span><span class="p">;</span>
+<span class="linenos">34</span>      <span class="ss">PermitRootLogin =</span> <span class="s2">&quot;no&quot;</span><span class="p">;</span> <span class="c1"># disable root login</span>
+<span class="linenos">35</span>      <span class="ss">PasswordAuthentication =</span> <span class="no">false</span><span class="p">;</span> <span class="c1"># disable password login</span>
+<span class="linenos">36</span>    <span class="p">};</span>
+<span class="linenos">37</span>    <span class="ss">openFirewall =</span> <span class="no">true</span><span class="p">;</span>
+<span class="linenos">38</span>  <span class="p">};</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span>  <span class="c1"># 省略其他配置......</span>
+<span class="linenos">41</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>此时运行<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">nixos-rebuild</span> <span class="pre">switch</span></code>部署修改后的配置，我们就成功配置了一个有用户<code class="docutils literal notranslate"><span class="pre">ryan</span></code>，开启了ssh后台服务的系统了。这就是NixOS的声明式系统配置的亮点，我们要对系统及性能修改，不用像之前一样，需要敲很多的命令，安装openssh-server，然后配置<code class="docutils literal notranslate"><span class="pre">/etc/ssh/sshd_config</span></code>，最后再<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">systemctl</span> <span class="pre">start</span> <span class="pre">sshd</span></code>开启，我们只需要修改<code class="docutils literal notranslate"><span class="pre">/etc/nixos/configuration.nix</span></code>中的配置，然后部署变更即可。</p>
+</section>
+<section id="id4">
+<h3>启用NixOS的Flakes支持<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h3>
+<p>与NixOS当前的默认配置方式相比，Flakes提供了更可靠的可复现性，同时它清晰的包结构定义和支持Git仓库为依赖，十分有利于代码分享。所以，我们更推荐使用Flakes来管理系统配置。</p>
+<p>目前Flakes作为一个实验特性，默认并不启用，因此我们需要修改配置文件，启用Flakes特性以及配套的全新版本nix命令行工具：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="p">{</span> config<span class="p">,</span> pkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="p">{</span>
+<span class="linenos"> 4</span>  <span class="ss">imports =</span>
+<span class="linenos"> 5</span>    <span class="p">[</span> <span class="c1"># Include the results of the hardware scan.</span>
+<span class="linenos"> 6</span>      <span class="o">.</span><span class="l">/hardware-configuration.nix</span>
+<span class="linenos"> 7</span>    <span class="p">];</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>  <span class="c1"># ......</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span>  <span class="c1"># 启用 Flakes 特性以及配套的船新 nix 命令行工具</span>
+<span class="linenos">12</span>  nix<span class="o">.</span>settings<span class="o">.</span><span class="ss">experimental-features =</span> <span class="p">[</span> <span class="s2">&quot;nix-command&quot;</span> <span class="s2">&quot;flakes&quot;</span> <span class="p">];</span>
+<span class="linenos">13</span>  environment<span class="o">.</span><span class="ss">systemPackages =</span> <span class="k">with</span> pkgs<span class="p">;</span> <span class="p">[</span>
+<span class="linenos">14</span>    <span class="c1"># Flakes 通过 git 命令拉取其依赖项，所以必须先安装好 git</span>
+<span class="linenos">15</span>    git
+<span class="linenos">16</span>    vim
+<span class="linenos">17</span>    wget
+<span class="linenos">18</span>  <span class="p">];</span>
+<span class="linenos">19</span>  <span class="c1"># 将默认编辑器设置为 vim</span>
+<span class="linenos">20</span>  environment<span class="o">.</span>variables<span class="o">.</span><span class="ss">EDITOR =</span> <span class="s2">&quot;vim&quot;</span><span class="p">;</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>  <span class="c1"># ......</span>
+<span class="linenos">23</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>之后我们运行<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">nixos-rebuild</span> <span class="pre">switch</span></code>部署更改，即可启用Flakes特性来管理系统配置。</p>
+</section>
+<section id="id5">
+<h3>将系统配置切换到使用flakes管理<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h3>
+<p>在启用了Flakes特性之后，我们使用<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">nixos-rebuild</span> <span class="pre">switch</span></code>命令之后，命令会优先读取<code class="docutils literal notranslate"><span class="pre">/etc/nixos/flake.nix</span></code>文件，如果找不到则再尝试<code class="docutils literal notranslate"><span class="pre">/etc/nixos/configuration.nix</span></code>中的配置。</p>
+<p>可以首先使用官方提供的模板来学习 flake 的编写，先查下有哪些模板：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">nix flake show templates</span>
+</pre></div>
+</div>
+<p>其中有个 <code class="docutils literal notranslate"><span class="pre">templates#full</span></code> 模板展示了所有可能的用法，可以看看它的内容：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">nix flake init -t templates#full</span>
+<span class="go">cat flake.nix</span>
+</pre></div>
+</div>
+<p>我们参照该模板创建文件 <code class="docutils literal notranslate"><span class="pre">/etc/nixos/flake.nix</span></code> 并编写好配置内容，后续系统的所有修改都将全部由 Nix Flakes 接管，示例内容如下：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="p">{</span>
+<span class="linenos"> 2</span>  <span class="ss">description =</span> <span class="s2">&quot;A simple NixOS flake&quot;</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span>  <span class="ss">inputs =</span> <span class="p">{</span>
+<span class="linenos"> 5</span>    <span class="c1"># NixOS 官方软件源，这里使用 nixos-24.11 分支</span>
+<span class="linenos"> 6</span>    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:NixOS/nixpkgs/nixos-24.11&quot;</span><span class="p">;</span>
+<span class="linenos"> 7</span>  <span class="p">};</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>  <span class="ss">outputs =</span> <span class="p">{</span> self<span class="p">,</span> nixpkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}@</span>inputs<span class="p">:</span> <span class="p">{</span>
+<span class="linenos">10</span>    <span class="c1"># TODO 请将下面的 my-nixos 替换成你的 hostname</span>
+<span class="linenos">11</span>    nixosConfigurations<span class="o">.</span><span class="ss">my-nixos =</span> nixpkgs<span class="o">.</span>lib<span class="o">.</span>nixosSystem <span class="p">{</span>
+<span class="linenos">12</span>      <span class="ss">system =</span> <span class="s2">&quot;x86_64-linux&quot;</span><span class="p">;</span>
+<span class="linenos">13</span>      <span class="ss">modules =</span> <span class="p">[</span>
+<span class="linenos">14</span>        <span class="c1"># 这里导入之前我们使用的 configuration.nix，</span>
+<span class="linenos">15</span>        <span class="c1"># 这样旧的配置文件仍然能生效</span>
+<span class="linenos">16</span>        <span class="o">.</span><span class="l">/configuration.nix</span>
+<span class="linenos">17</span>      <span class="p">];</span>
+<span class="linenos">18</span>    <span class="p">};</span>
+<span class="linenos">19</span>  <span class="p">};</span>
+<span class="linenos">20</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>这里我们定义了一个名为 <code class="docutils literal notranslate"><span class="pre">my-nixos</span></code> 的系统，它的配置文件为 <code class="docutils literal notranslate"><span class="pre">/etc/nixos/</span></code> 文件夹下的<code class="docutils literal notranslate"><span class="pre">./configuration.nix</span></code>，也就是说我们仍然沿用了旧的配置。</p>
+<p>现在执行 <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">nixos-rebuild</span> <span class="pre">switch</span></code> 应用配置，系统应该没有任何变化，因为我们仅仅是切换到了 Nix Flakes，配置内容与之前还是一致的。切换完毕后，我们就可以通过 Flakes 特性来管理系统了。</p>
+<p>目前我们的 flake 包含这几个文件：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/etc/nixos/flake.nix</span></code>: flake 的入口文件，执行 sudo nixos-rebuild switch 时会识别并部署它。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/etc/nixos/flake.lock</span></code>: 自动生成的版本锁文件，它记录了整个 flake 所有输入的数据源、hash 值、版本号，确保系统可复现。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/etc/nixos/configuration.nix</span></code>: 这是我们之前的配置文件，在 flake.nix 中被作为模块导入，目前所有系统配置都写在此文件中。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/etc/nixos/hardware-configuration.nix</span></code>: 这是系统硬件配置文件，由 NixOS 生成，描述了系统的硬件信息.</p></li>
+</ul>
+</section>
+</section>
+<section id="nix-shell">
+<h2>更高效地使用<code class="docutils literal notranslate"><span class="pre">nix-shell</span></code><a class="headerlink" href="#nix-shell" title="Permalink to this heading">#</a></h2>
+<p>Nix Flake为Nix评估过程（evaluations）提供了缓存机制，因此使用新的<code class="docutils literal notranslate"><span class="pre">nix</span> <span class="pre">develop</span></code>相较原始的<code class="docutils literal notranslate"><span class="pre">nix-shell</span></code>会更快很多。</p>
+<p>我们回忆下<code class="docutils literal notranslate"><span class="pre">nix-shell</span></code>对应的<code class="docutils literal notranslate"><span class="pre">shell.nix</span></code>文件长什么样子：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># shell.nix</span>
+<span class="linenos"> 2</span><span class="p">{</span>
+<span class="linenos"> 3</span>  pkgs <span class="o">?</span> <span class="nb">import</span> <span class="l">&lt;nixpkgs&gt;</span> <span class="p">{</span> <span class="p">},</span>
+<span class="linenos"> 4</span><span class="p">}:</span>
+<span class="linenos"> 5</span>pkgs<span class="o">.</span>mkShell <span class="p">{</span>
+<span class="linenos"> 6</span>  <span class="ss">packages =</span> <span class="p">[</span> pkgs<span class="o">.</span>nixfmt <span class="p">];</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span>  <span class="ss">shellHook =</span> <span class="s1">&#39;&#39;</span>
+<span class="linenos"> 9</span><span class="s1">    # ...</span>
+<span class="linenos">10</span><span class="s1">  &#39;&#39;</span><span class="p">;</span>
+<span class="linenos">11</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>这时候，我们在相同目录下运行<code class="docutils literal notranslate"><span class="pre">nix-shell</span></code>，等待几秒钟，Nix就开始下载和编译相关的依赖。结束后，我们便开启了一个新的shell，该shell中就有我们<code class="docutils literal notranslate"><span class="pre">shell.nix</span></code>中的定义的环境。引入了Flake之后，我们可以使用新的方式替代，以下是<code class="docutils literal notranslate"><span class="pre">flake.nix</span></code>文件：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># flake.nix</span>
+<span class="linenos"> 2</span><span class="p">{</span>
+<span class="linenos"> 3</span>  inputs<span class="o">.</span>nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:NixOS/nixpkgs/nixpkgs-unstable&quot;</span><span class="p">;</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span>  <span class="ss">outputs =</span>
+<span class="linenos"> 6</span>    <span class="p">{</span> nixpkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span>
+<span class="linenos"> 7</span>    <span class="p">{</span>
+<span class="linenos"> 8</span>      <span class="cm">/*</span>
+<span class="linenos"> 9</span><span class="cm">        This example assumes your system is x86_64-linux</span>
+<span class="linenos">10</span><span class="cm">        change as neccesary</span>
+<span class="linenos">11</span><span class="cm">      */</span>
+<span class="linenos">12</span>      devShells<span class="o">.</span><span class="ss">x86_64-linux =</span>
+<span class="linenos">13</span>        <span class="k">let</span>
+<span class="linenos">14</span>          <span class="ss">pkgs =</span> nixpkgs<span class="o">.</span>legacyPackages<span class="o">.</span>x86_64-linux<span class="p">;</span>
+<span class="linenos">15</span>        <span class="k">in</span>
+<span class="linenos">16</span>        <span class="p">{</span>
+<span class="linenos">17</span>          <span class="ss">default =</span> pkgs<span class="o">.</span>mkShell <span class="p">{</span>
+<span class="linenos">18</span>            <span class="ss">packages =</span> <span class="p">[</span> pkgs<span class="o">.</span>hello <span class="p">];</span>
+<span class="linenos">19</span>          <span class="p">};</span>
+<span class="linenos">20</span>        <span class="p">};</span>
+<span class="linenos">21</span>    <span class="p">};</span>
+<span class="linenos">22</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="making-your-evaluations-pure">
+<h2>确保评估过程的纯粹性（Making your evaluations pure）<a class="headerlink" href="#making-your-evaluations-pure" title="Permalink to this heading">#</a></h2>
+<p>Nix Flakes 默认运行在<strong>纯评估模式（pure evaluation mode）</strong>，但该模式目前文档尚不完善。以下为现阶段的关键注意事项：</p>
+<ol class="arabic">
+<li><p><strong>哈希校验强制化</strong><br />
+<code class="docutils literal notranslate"><span class="pre">fetchurl</span></code> 与 <code class="docutils literal notranslate"><span class="pre">fetchtar</span></code> 必须提供 <code class="docutils literal notranslate"><span class="pre">sha256</span></code> 参数方可被视为纯评估。</p></li>
+<li><p><strong>系统架构显式传递</strong><br />
+<code class="docutils literal notranslate"><span class="pre">builtins.currentSystem</span></code> 因依赖环境变量属于<strong>非密闭（non-hermetic）的污染源</strong>。推荐做法是：向需要系统架构的派生包（derivations）显式传递参数（例如 <code class="docutils literal notranslate"><span class="pre">x86_64-linux</span></code>）。</p></li>
+<li><p><strong>通道导入的纯化替代方案</strong><br />
+避免使用类似 <code class="docutils literal notranslate"><span class="pre">&lt;nixpkgs&gt;</span></code> 的通道路径导入，转而通过 <code class="docutils literal notranslate"><span class="pre">flake.nix</span></code> 的 outputs 函数引用输入项的存储路径（store path）。例如：</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="ss">outputs =</span> <span class="p">{</span> self<span class="p">,</span> nixpkgs<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span>
+<span class="linenos">2</span><span class="p">{</span>
+<span class="linenos">3</span>nixosConfigurations<span class="o">.</span><span class="ss">machine =</span> nixpkgs<span class="o">.</span>lib<span class="o">.</span>nixosSystem <span class="p">{</span>
+<span class="linenos">4</span>  <span class="ss">modules =</span> <span class="p">[</span>
+<span class="linenos">5</span>    <span class="s2">&quot;</span><span class="si">${</span>nixpkgs<span class="si">}</span><span class="s2">/nixos/modules/&lt;some-module&gt;.nix&quot;</span>
+<span class="linenos">6</span>    <span class="o">.</span><span class="l">/machine.nix</span>
+<span class="linenos">7</span>  <span class="p">];</span>
+<span class="linenos">8</span><span class="p">};</span>
+<span class="linenos">9</span><span class="p">};</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>最后我们执行<code class="docutils literal notranslate"><span class="pre">nix</span> <span class="pre">develop</span></code>即可打开一个满足该配置文件的shell。</p>
+</section>
+<section id="flakenixpkgs">
+<h2>在Flake中从多个nixpkgs分支引入包<a class="headerlink" href="#flakenixpkgs" title="Permalink to this heading">#</a></h2>
+<p>下面这个代码，我们从nixos-23.11和nixos-unstable中引入包。</p>
+<div class="highlight-nix notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="p">{</span>
+<span class="linenos"> 2</span>  <span class="ss">description =</span> <span class="s2">&quot;NixOS configuration with two or more channels&quot;</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span> <span class="ss">inputs =</span> <span class="p">{</span>
+<span class="linenos"> 5</span>    nixpkgs<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:NixOS/nixpkgs/nixos-23.11&quot;</span><span class="p">;</span>
+<span class="linenos"> 6</span>    nixpkgs-unstable<span class="o">.</span><span class="ss">url =</span> <span class="s2">&quot;github:NixOS/nixpkgs/nixos-unstable&quot;</span><span class="p">;</span>
+<span class="linenos"> 7</span>  <span class="p">};</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>  <span class="ss">outputs =</span>
+<span class="linenos">10</span>    <span class="p">{</span> nixpkgs<span class="p">,</span> nixpkgs-unstable<span class="p">,</span> <span class="o">...</span> <span class="p">}:</span>
+<span class="linenos">11</span>    <span class="p">{</span>
+<span class="linenos">12</span>      nixosConfigurations<span class="o">.</span><span class="s2">&quot;&lt;hostname&gt;&quot;</span> <span class="o">=</span> nixpkgs<span class="o">.</span>lib<span class="o">.</span>nixosSystem <span class="p">{</span>
+<span class="linenos">13</span>        <span class="ss">modules =</span> <span class="p">[</span>
+<span class="linenos">14</span>          <span class="p">{</span>
+<span class="linenos">15</span>            nixpkgs<span class="o">.</span><span class="ss">overlays =</span> <span class="p">[</span>
+<span class="linenos">16</span>              <span class="c1">#(final: prev: {</span>
+<span class="linenos">17</span>               <span class="c1">#unstable = nixpkgs-unstable.legacyPackages.${prev.system};</span>
+<span class="linenos">18</span>                <span class="c1"># use this variant if unfree packages are needed:</span>
+<span class="linenos">19</span>                <span class="c1"># unstable = import nixpkgs-unstable {</span>
+<span class="linenos">20</span>                <span class="c1">#   inherit prev;</span>
+<span class="linenos">21</span>                <span class="c1">#   system = prev.system;</span>
+<span class="linenos">22</span>                <span class="c1">#   config.allowUnfree = true;</span>
+<span class="linenos">23</span>                <span class="c1"># };</span>
+<span class="linenos">24</span>              <span class="c1">#})</span>
+<span class="linenos">25</span>            <span class="p">];</span>
+<span class="linenos">26</span>          <span class="p">}</span>
+<span class="linenos">27</span>          <span class="o">.</span><span class="l">/configuration.nix</span>
+<span class="linenos">28</span>        <span class="p">];</span>
+<span class="linenos">29</span>      <span class="p">};</span>
+<span class="linenos">30</span>    <span class="p">};</span>
+<span class="linenos">31</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="nix-flake">
+<h2>nix flake的子命令<a class="headerlink" href="#nix-flake" title="Permalink to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">nix</span> <span class="pre">flake</span> <span class="pre">[选项...]</span> <span class="pre">子命令</span></code></p>
+<p>其中，<strong>子命令</strong> 可以是以下之一：</p>
+<ul class="simple">
+<li><p><strong>nix flake archive</strong> - 将 flake 及其所有输入复制到存储中</p></li>
+<li><p><strong>nix flake check</strong> - 检查 flake 是否可以正常评估并运行其测试</p></li>
+<li><p><strong>nix flake clone</strong> - 克隆 flake 仓库</p></li>
+<li><p><strong>nix flake info</strong> - 显示 flake 的元数据</p></li>
+<li><p><strong>nix flake init</strong> - 从模板在当前目录中创建一个 flake</p></li>
+<li><p><strong>nix flake lock</strong> - 创建缺失的锁文件条目</p></li>
+<li><p><strong>nix flake metadata</strong> - 显示 flake 的元数据</p></li>
+<li><p><strong>nix flake new</strong> - 在指定目录中从模板创建一个 flake</p></li>
+<li><p><strong>nix flake prefetch</strong> - 将 flake 引用表示的源代码树下载到 Nix 存储中</p></li>
+<li><p><strong>nix flake show</strong> - 显示 flake 提供的输出</p></li>
+<li><p><strong>nix flake update</strong> - 更新 flake 的锁文件</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="flake_intro.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Flakes Introduction</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../contributing/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Contributing</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">简介</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#warning">Warning⚠️（程序员看过来）</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">隐私泄露警告</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#git">Git警告</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flakes">如何开启Flakes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flake-schema">Flake Schema</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#input-schema">Input Schema</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#output-schema">Output Schema</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nixosflakes">在NixOS中全面使用Flakes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#nixos">传统的NixOS管理方式</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">启用NixOS的Flakes支持</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">将系统配置切换到使用flakes管理</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nix-shell">更高效地使用<code class="docutils literal notranslate"><span class="pre">nix-shell</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#making-your-evaluations-pure">确保评估过程的纯粹性（Making your evaluations pure）</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flakenixpkgs">在Flake中从多个nixpkgs分支引入包</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nix-flake">nix flake的子命令</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Killuayz
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

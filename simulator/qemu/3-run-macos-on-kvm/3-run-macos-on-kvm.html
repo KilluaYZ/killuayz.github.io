@@ -1,0 +1,726 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>如何使用QEMU/KVM运行MacOS &#8212; Kernel Fuzzing Tutorial  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm';</script>
+    <link rel="canonical" href="https://nix.dev/simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.html" />
+    <link rel="shortcut icon" href="../../../_static/favicon.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="在QEMU中加载自定义固件（firmware）失败" href="../4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html" />
+    <link rel="prev" title="QEMU中如何配置网络" href="../2-how-to-connect-net/2-how-to-connect-net.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><div class="logo">
+  <a href="/">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <img src="/_static/img/linux.svg" alt="">
+      <span>Kernel Fuzzing</span>
+      <span>V0.11.0</span>
+    </div>
+  </a>
+</div>
+
+<iframe
+  src="https://ghbtns.com/github-btn.html?user=Killuayz&repo=Kernel-Fuzzing-Tutorial&type=star&count=true&size=large"
+  frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+
+<p>Notes about Kernel Fuzzing</p></div>
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../kernel/index.html">Kernel</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../kernel/linux/index.html">Linux Kernel</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../kernel/linux/tutorial/index.html">Linux Kernel Tutorial</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/compile_run/compile_run.html">Linux 内核的编译与运行</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/build_image/build_image.html">如何制作简单的Linux系统镜像</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/debug/debug_kernel.html">Linux内核调试</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/simple_driver/simple_driver.html">简单的驱动程序：VirtualDisk字符设备驱动</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/load_module/linux_kernel_load_module.html">如何让Linux内核编译驱动模块并且加载驱动模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/udev/udev.html">Linux的设备管理器——udev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/sysfs/sysfs.html">Sysfs介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/ebpf/ebpf.html">eBPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/ioctl/ioctl.html">系统调用ioctl介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/device_driver_arch/device_driver_arch.html">Linux设备驱动框架</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/xarray/xarray.html">基础数据结构介绍——XArray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/globalmem_driver/globalmem_driver.html">globalmem 虚拟设备</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../kernel/linux/bugs/index.html">Linux Kernel Bugs</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/cve/CVE-2024-50274/CVE-2024-50274.html">CVE-2024-50274</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/cve/CVE-2024-43894/CVE-2024-43894.html">CVE-2024-43894</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/gpf_drm_crtc_next_vblank_start/gpf_drm_crtc_next_vblank_start.html">general protection fault in drm_crtc_next_vblank_start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/uaf_netdev_unregister_kobject/uaf_netdev_unregister_kobject.html">KASAN: use-after-free Read in netdev_unregister_kobject</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/npd_read_ida_free/npd_read_ida_free.html">KASAN: null-ptr-deref Read in ida_free (4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/gpf_hci_abort_conn/gpf_hci_abort_conn.html">general protection fault in hci_abort_conn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../fuzzer/index.html">Fuzzer</a><input checked class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../fuzzer/syzkaller/index.html">SyzKaller</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../fuzzer/syzkaller/0-introduction/0-introduction.html">Syzkaller 介绍</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">Simulator</a><input checked class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">QEMU</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../0-how-to-use-kvm/0-how-to-use-kvm.html">如何使用KVM运行系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../1-how-to-share-directory/1-how-to-share-directory.html">如何在HOST和GUEST之间建立共享目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../2-how-to-connect-net/2-how-to-connect-net.html">QEMU中如何配置网络</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">如何使用QEMU/KVM运行MacOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html">在QEMU中加载自定义固件（firmware）失败</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../paper/index.html">Paper</a><input checked class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../paper/paper.html">Papers About Kernel Fuzzing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../nix/index.html">Nix</a><input checked class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../nix/install-nix.html">Install Nix</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/tutorials/index.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/tutorials/first-steps/index.html">First steps</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/ad-hoc-shell-environments.html">Ad hoc shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/reproducible-scripts.html">Reproducible interpreted scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/declarative-shell.html">Declarative shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs.html">Towards reproducibility: pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/nix-language.html">Nix language basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/packaging-existing-software.html">Packaging existing software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/callpackage.html">Package parameters and overrides with <code class="docutils literal notranslate"><span class="pre">callPackage</span></code></a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/working-with-local-files.html">Working with local files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/cross-compilation.html">Cross compilation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/tutorials/module-system/index.html">Module system</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/module-system/a-basic-module/index.html">1. A basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/module-system/deep-dive.html">2. Module system deep dive</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/tutorials/nixos/index.html">NixOS</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/nixos-configuration-on-vm.html">NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/building-bootable-iso-image.html">Building a bootable ISO image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/building-and-running-docker-images.html">Building and running Docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/integration-testing-using-virtual-machines.html">Integration testing with NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/provisioning-remote-machines.html">Provisioning remote machines via SSH</a></li>
+
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/installing-nixos-on-a-raspberry-pi.html">Installing NixOS on a Raspberry Pi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/deploying-nixos-using-terraform.html">Deploying NixOS using Terraform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/binary-cache-setup.html">Setting up an HTTP binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/distributed-builds-setup.html">Setting up distributed builds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/guides/index.html">Guides</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/guides/recipes/index.html">Recipes</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/add-binary-cache.html">Configure Nix to use a custom binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/direnv.html">Automatic environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/sharing-dependencies.html">Dependencies in the development shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/dependency-management.html">Managing remote sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/python-environment.html">Python development environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/post-build-hook.html">Setting up post-build hooks</a></li>
+
+
+
+
+
+
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/continuous-integration-github-actions.html">Continuous integration with GitHub Actions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/guides/best-practices.html">Best practices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/guides/troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/guides/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/reference/index.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/reference/glossary.html">Glossary</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/reference/nix-manual.html">Nix reference manual</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/development/">Nix pre-release (development)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/latest/">Nix @nix-latest@ (latest)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/rolling/">Nix @nix-rolling@ (in Nixpkgs rolling)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/stable/">Nix @nix-stable@ (in Nixpkgs @nixpkgs-stable@)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/prev-stable/">Nix @nix-prev-stable@ (in Nixpkgs @nixpkgs-prev-stable@)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixpkgs/stable/">Nixpkgs manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixos/stable/">NixOS manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/">Community projects</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/awesome-nix">Support tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/recommended-reading.html">Further reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/reference/pinning-nixpkgs.html">Pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/concepts/index.html">Concepts</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/concepts/flakes.html">Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/concepts/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/flakes/index.html">Flakes</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/flakes/flake_intro.html">Introduction to Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/flakes/flake_getting_start.html">Getting Start</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/contributing/index.html">Contributing</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/contributing/how-to-contribute.html">How to contribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/contributing/how-to-get-help.html">How to get help</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/contributing/documentation/index.html">Contributing documentation</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/resources.html">Documentation resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/diataxis.html">Documentation framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/style-guide.html">Style guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/writing-a-tutorial.html">How to write a tutorial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/acknowledgments/index.html">Acknowledgements</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/acknowledgments/sponsors.html">Sponsors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../wiki/index.html">Wiki</a><input checked class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/0-drm/drm.html">DRM介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/1-nix_with_glibc_compile_error/nix_with_glibc_compile_error.html">Nix打包项目时遇到Cannot find stdlib.h</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/2-nix_golang_get_proxy_connection_refused/nix_golang_get_proxy_connection_refused.html">使用Nix打包Golang项目时报出错误<code class="docutils literal notranslate"><span class="pre">Connection</span> <span class="pre">Refused</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/3-perf_event_open/perf_event_open.html">perf_event_open 函数介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/4-compile_v4.x_undefined_ilog2_NaN/compile_v4.x_undefined_ilog2_NaN.html">在编译linux内核v4.x错误undefined reference to `____ilog2_NaN’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/5-compile_linux_modules/compile_linux_modules.html">如何编译Linux的全部模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/6-specific_keyring_file_not_found/specific_keyring_file_not_found.html">编译时遇到specified keyring file xxx not found</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/7-cannot_insert_hardware_breakpoint/cannot_insert_hardware_breakpoint.html">Cannot insert hardware breakpoint 11:Remote failure reply: 22.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/8-employ-own-overleaf/employ_own_overleaf.html">部署自己的Overleaf</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial/issues/new?title=Issue%20on%20page%20%2Fsimulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../_sources/simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>如何使用QEMU/KVM运行MacOS</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">介绍</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">安装配置</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#osx-kvm">克隆OSX-KVM</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macos">下载MacOS镜像</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qemu-kvm">下载QEMU/KVM</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">创建磁盘</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">修改配置</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#libvirt">加载配置到libvirt</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">运行MacOS并安装</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="qemu-kvmmacos">
+<h1>如何使用QEMU/KVM运行MacOS<a class="headerlink" href="#qemu-kvmmacos" title="Permalink to this heading">#</a></h1>
+<section id="id1">
+<h2>介绍<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<p>macbook好贵，但是还是忍不住想要试试MacOS怎么样？负责任地说，MacOS现在市场占有率也不错，因此它也是我们内核Fuzzing的重要研究对象之一。</p>
+<p>想要运行起来XNU/Darwin内核，我们需要为qemu添加特殊的补丁，这个补丁就是<a class="reference external" href="https://github.com/kholia/OSX-KVM">OSX-KVM</a>。这个库提供了一些固件信息，libvirt的配置等，能够让我们非常方便地运行MacOS。</p>
+</section>
+<section id="id2">
+<h2>安装配置<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
+<section id="osx-kvm">
+<h3>克隆OSX-KVM<a class="headerlink" href="#osx-kvm" title="Permalink to this heading">#</a></h3>
+<p>我们可以通过以下命令克隆<a class="reference external" href="https://github.com/kholia/OSX-KVM">OSX-KVM</a>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git clone https://github.com/kholia/OSX-KVM.git</span>
+</pre></div>
+</div>
+</section>
+<section id="macos">
+<h3>下载MacOS镜像<a class="headerlink" href="#macos" title="Permalink to this heading">#</a></h3>
+<p>可以访问百度网盘下载：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>通过网盘分享的文件：Install_macOS_Ventura_13.0_22A380.iso
+链接: https://pan.baidu.com/s/1eP1ciJ988pJ745avQ1BCsQ?pwd=ks5g 提取码: ks5g
+</pre></div>
+</div>
+<p>分享的文件已经是iso格式了，如果你下载的镜像是dmg格式，在Linux中，可以下载<code class="docutils literal notranslate"><span class="pre">dmg2img</span></code>这个工具进行转换</p>
+</section>
+<section id="qemu-kvm">
+<h3>下载QEMU/KVM<a class="headerlink" href="#qemu-kvm" title="Permalink to this heading">#</a></h3>
+<p>使用以下命令下载QEMU，libvirt，以及图形化界面</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo apt-get install qemu qemu-kvm libvirt-daemon libvirt-clients  libvirt-bin bridge-utils virt-manager virtinst virt-viewer</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>创建磁盘<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h3>
+<p>我们需要创建一个<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式的磁盘，用来作为我们系统的硬盘使用。<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式的镜像不是一次性分配所有内存的，它会随着虚拟机的使用逐步增加，所以我们设置得稍微大一点也没有关系。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qemu</span><span class="o">-</span><span class="n">img</span> <span class="n">create</span> <span class="o">-</span><span class="n">f</span> <span class="n">qcow2</span> <span class="n">mac_hdd_ng</span><span class="o">.</span><span class="n">img</span> <span class="mi">512</span><span class="n">G</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>修改配置<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h3>
+<p>打开<code class="docutils literal notranslate"><span class="pre">OSX-KVM/macOS-libvirt-Catalina.xml</span></code>，修改其中所有包含<code class="docutils literal notranslate"><span class="pre">CHANGEME</span></code>的项</p>
+<p><img alt="" src="../../../_images/12.png" /></p>
+<p>值得注意的是，在<code class="docutils literal notranslate"><span class="pre">&lt;device&gt;</span></code>中需要修改<code class="docutils literal notranslate"><span class="pre">&lt;disk&gt;</span></code>，一个指向下载的系统镜像，另一个指向我们创建的硬盘：</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;device&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- 自己创建的磁盘 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;disk</span><span class="w"> </span><span class="na">type=</span><span class="s">&#39;file&#39;</span><span class="w"> </span><span class="na">device=</span><span class="s">&#39;disk&#39;</span><span class="nt">&gt;</span>
+<span class="w">      </span><span class="nt">&lt;driver</span><span class="w"> </span><span class="na">name=</span><span class="s">&#39;qemu&#39;</span><span class="w"> </span><span class="na">type=</span><span class="s">&#39;qcow2&#39;</span><span class="w"> </span><span class="na">cache=</span><span class="s">&#39;writeback&#39;</span><span class="w"> </span><span class="na">io=</span><span class="s">&#39;threads&#39;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;source</span><span class="w"> </span><span class="na">file=</span><span class="s">&#39;/home/ziyang/macos-hd/mac_hdd_ng.img&#39;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;target</span><span class="w"> </span><span class="na">dev=</span><span class="s">&#39;sdb&#39;</span><span class="w"> </span><span class="na">bus=</span><span class="s">&#39;sata&#39;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;boot</span><span class="w"> </span><span class="na">order=</span><span class="s">&#39;1&#39;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;address</span><span class="w"> </span><span class="na">type=</span><span class="s">&#39;drive&#39;</span><span class="w"> </span><span class="na">controller=</span><span class="s">&#39;0&#39;</span><span class="w"> </span><span class="na">bus=</span><span class="s">&#39;0&#39;</span><span class="w"> </span><span class="na">target=</span><span class="s">&#39;0&#39;</span><span class="w"> </span><span class="na">unit=</span><span class="s">&#39;1&#39;</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/disk&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- 自己下载的MacOS系统镜像 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;disk</span><span class="w"> </span><span class="na">type=</span><span class="s">&quot;file&quot;</span><span class="w"> </span><span class="na">device=</span><span class="s">&quot;disk&quot;</span><span class="nt">&gt;</span>
+<span class="w">      </span><span class="nt">&lt;driver</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;qemu&quot;</span><span class="w"> </span><span class="na">type=</span><span class="s">&quot;raw&quot;</span><span class="w"> </span><span class="na">cache=</span><span class="s">&quot;writeback&quot;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;source</span><span class="w"> </span><span class="na">file=</span><span class="s">&quot;/home/ziyang/macos-hd/Install_macOS_Ventura_13.0_22A380.iso&quot;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;target</span><span class="w"> </span><span class="na">dev=</span><span class="s">&quot;sdc&quot;</span><span class="w"> </span><span class="na">bus=</span><span class="s">&quot;sata&quot;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;boot</span><span class="w"> </span><span class="na">order=</span><span class="s">&quot;3&quot;</span><span class="nt">/&gt;</span>
+<span class="w">      </span><span class="nt">&lt;address</span><span class="w"> </span><span class="na">type=</span><span class="s">&quot;drive&quot;</span><span class="w"> </span><span class="na">controller=</span><span class="s">&quot;0&quot;</span><span class="w"> </span><span class="na">bus=</span><span class="s">&quot;0&quot;</span><span class="w"> </span><span class="na">target=</span><span class="s">&quot;0&quot;</span><span class="w"> </span><span class="na">unit=</span><span class="s">&quot;2&quot;</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/disk&gt;</span>
+<span class="nt">&lt;/divice&gt;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="libvirt">
+<h2>加载配置到libvirt<a class="headerlink" href="#libvirt" title="Permalink to this heading">#</a></h2>
+<p>我们在命令行中使用以下命令将配置加载到libvirt中：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">virsh define ./macOS-libvirt-Catalina.xml</span>
+</pre></div>
+</div>
+<p>加载之后，打开<code class="docutils literal notranslate"><span class="pre">virt-manager</span></code>便可在其中看到我们新加入的配置<code class="docutils literal notranslate"><span class="pre">MacOS</span></code></p>
+<p><img alt="" src="../../../_images/2.png" /></p>
+</section>
+<section id="id5">
+<h2>运行MacOS并安装<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h2>
+<p>安装部分比较简单，就不说了，值得注意的是，我们第一次运行的时候，需要使用MacOS自带的磁盘分区工具，将我们自己新建的磁盘格式化，只有那样在安装的时候，安装程序才能识别到我们创建的硬盘。之后就正常运行即可。</p>
+<p><img alt="" src="../../../_images/3.png" /></p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../2-how-to-connect-net/2-how-to-connect-net.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">QEMU中如何配置网络</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">在QEMU中加载自定义固件（firmware）失败</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">介绍</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">安装配置</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#osx-kvm">克隆OSX-KVM</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#macos">下载MacOS镜像</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qemu-kvm">下载QEMU/KVM</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">创建磁盘</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">修改配置</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#libvirt">加载配置到libvirt</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">运行MacOS并安装</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Killuayz
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

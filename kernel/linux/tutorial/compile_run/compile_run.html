@@ -1,0 +1,855 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Linux 内核的编译与运行 &#8212; Kernel Fuzzing Tutorial  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/clipboard.min.js"></script>
+    <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'kernel/linux/tutorial/compile_run/compile_run';</script>
+    <link rel="canonical" href="https://nix.dev/kernel/linux/tutorial/compile_run/compile_run.html" />
+    <link rel="shortcut icon" href="../../../../_static/favicon.png"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="如何制作简单的Linux系统镜像" href="../build_image/build_image.html" />
+    <link rel="prev" title="Linux Kernel Tutorial" href="../index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><div class="logo">
+  <a href="/">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <img src="/_static/img/linux.svg" alt="">
+      <span>Kernel Fuzzing</span>
+      <span>V0.11.0</span>
+    </div>
+  </a>
+</div>
+
+<iframe
+  src="https://ghbtns.com/github-btn.html?user=Killuayz&repo=Kernel-Fuzzing-Tutorial&type=star&count=true&size=large"
+  frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+
+<p>Notes about Kernel Fuzzing</p></div>
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../../index.html">Kernel</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../../index.html">Linux Kernel</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3 current active has-children"><a class="reference internal" href="../index.html">Linux Kernel Tutorial</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l4 current active"><a class="current reference internal" href="#">Linux 内核的编译与运行</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../build_image/build_image.html">如何制作简单的Linux系统镜像</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../debug/debug_kernel.html">Linux内核调试</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../simple_driver/simple_driver.html">简单的驱动程序：VirtualDisk字符设备驱动</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../load_module/linux_kernel_load_module.html">如何让Linux内核编译驱动模块并且加载驱动模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../udev/udev.html">Linux的设备管理器——udev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sysfs/sysfs.html">Sysfs介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ebpf/ebpf.html">eBPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ioctl/ioctl.html">系统调用ioctl介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../device_driver_arch/device_driver_arch.html">Linux设备驱动框架</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../xarray/xarray.html">基础数据结构介绍——XArray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../globalmem_driver/globalmem_driver.html">globalmem 虚拟设备</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../bugs/index.html">Linux Kernel Bugs</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/cve/CVE-2024-50274/CVE-2024-50274.html">CVE-2024-50274</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/cve/CVE-2024-43894/CVE-2024-43894.html">CVE-2024-43894</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/gpf_drm_crtc_next_vblank_start/gpf_drm_crtc_next_vblank_start.html">general protection fault in drm_crtc_next_vblank_start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/uaf_netdev_unregister_kobject/uaf_netdev_unregister_kobject.html">KASAN: use-after-free Read in netdev_unregister_kobject</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/npd_read_ida_free/npd_read_ida_free.html">KASAN: null-ptr-deref Read in ida_free (4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/gpf_hci_abort_conn/gpf_hci_abort_conn.html">general protection fault in hci_abort_conn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../fuzzer/index.html">Fuzzer</a><input checked class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../fuzzer/syzkaller/index.html">SyzKaller</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../fuzzer/syzkaller/0-introduction/0-introduction.html">Syzkaller 介绍</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../simulator/index.html">Simulator</a><input checked class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../simulator/qemu/index.html">QEMU</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/0-how-to-use-kvm/0-how-to-use-kvm.html">如何使用KVM运行系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/1-how-to-share-directory/1-how-to-share-directory.html">如何在HOST和GUEST之间建立共享目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/2-how-to-connect-net/2-how-to-connect-net.html">QEMU中如何配置网络</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.html">如何使用QEMU/KVM运行MacOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html">在QEMU中加载自定义固件（firmware）失败</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../paper/index.html">Paper</a><input checked class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../paper/paper.html">Papers About Kernel Fuzzing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../nix/index.html">Nix</a><input checked class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../nix/install-nix.html">Install Nix</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/tutorials/index.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/first-steps/index.html">First steps</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/ad-hoc-shell-environments.html">Ad hoc shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/reproducible-scripts.html">Reproducible interpreted scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/declarative-shell.html">Declarative shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs.html">Towards reproducibility: pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/nix-language.html">Nix language basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/packaging-existing-software.html">Packaging existing software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/callpackage.html">Package parameters and overrides with <code class="docutils literal notranslate"><span class="pre">callPackage</span></code></a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/working-with-local-files.html">Working with local files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/cross-compilation.html">Cross compilation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/module-system/index.html">Module system</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/module-system/a-basic-module/index.html">1. A basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/module-system/deep-dive.html">2. Module system deep dive</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/nixos/index.html">NixOS</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/nixos-configuration-on-vm.html">NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/building-bootable-iso-image.html">Building a bootable ISO image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/building-and-running-docker-images.html">Building and running Docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/integration-testing-using-virtual-machines.html">Integration testing with NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/provisioning-remote-machines.html">Provisioning remote machines via SSH</a></li>
+
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/installing-nixos-on-a-raspberry-pi.html">Installing NixOS on a Raspberry Pi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/deploying-nixos-using-terraform.html">Deploying NixOS using Terraform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/binary-cache-setup.html">Setting up an HTTP binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/distributed-builds-setup.html">Setting up distributed builds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/guides/index.html">Guides</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/guides/recipes/index.html">Recipes</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/add-binary-cache.html">Configure Nix to use a custom binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/direnv.html">Automatic environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/sharing-dependencies.html">Dependencies in the development shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/dependency-management.html">Managing remote sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/python-environment.html">Python development environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/post-build-hook.html">Setting up post-build hooks</a></li>
+
+
+
+
+
+
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/continuous-integration-github-actions.html">Continuous integration with GitHub Actions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/best-practices.html">Best practices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/reference/index.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/reference/glossary.html">Glossary</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/reference/nix-manual.html">Nix reference manual</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/development/">Nix pre-release (development)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/latest/">Nix @nix-latest@ (latest)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/rolling/">Nix @nix-rolling@ (in Nixpkgs rolling)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/stable/">Nix @nix-stable@ (in Nixpkgs @nixpkgs-stable@)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/prev-stable/">Nix @nix-prev-stable@ (in Nixpkgs @nixpkgs-prev-stable@)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixpkgs/stable/">Nixpkgs manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixos/stable/">NixOS manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/">Community projects</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/awesome-nix">Support tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/recommended-reading.html">Further reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/reference/pinning-nixpkgs.html">Pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/concepts/index.html">Concepts</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/concepts/flakes.html">Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/concepts/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/flakes/index.html">Flakes</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/flakes/flake_intro.html">Introduction to Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/flakes/flake_getting_start.html">Getting Start</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/contributing/index.html">Contributing</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/contributing/how-to-contribute.html">How to contribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/contributing/how-to-get-help.html">How to get help</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/contributing/documentation/index.html">Contributing documentation</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/resources.html">Documentation resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/diataxis.html">Documentation framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/style-guide.html">Style guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/writing-a-tutorial.html">How to write a tutorial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/acknowledgments/index.html">Acknowledgements</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/acknowledgments/sponsors.html">Sponsors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../wiki/index.html">Wiki</a><input checked class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/0-drm/drm.html">DRM介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/1-nix_with_glibc_compile_error/nix_with_glibc_compile_error.html">Nix打包项目时遇到Cannot find stdlib.h</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/2-nix_golang_get_proxy_connection_refused/nix_golang_get_proxy_connection_refused.html">使用Nix打包Golang项目时报出错误<code class="docutils literal notranslate"><span class="pre">Connection</span> <span class="pre">Refused</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/3-perf_event_open/perf_event_open.html">perf_event_open 函数介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/4-compile_v4.x_undefined_ilog2_NaN/compile_v4.x_undefined_ilog2_NaN.html">在编译linux内核v4.x错误undefined reference to `____ilog2_NaN’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/5-compile_linux_modules/compile_linux_modules.html">如何编译Linux的全部模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/6-specific_keyring_file_not_found/specific_keyring_file_not_found.html">编译时遇到specified keyring file xxx not found</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/7-cannot_insert_hardware_breakpoint/cannot_insert_hardware_breakpoint.html">Cannot insert hardware breakpoint 11:Remote failure reply: 22.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/8-employ-own-overleaf/employ_own_overleaf.html">部署自己的Overleaf</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial/issues/new?title=Issue%20on%20page%20%2Fkernel/linux/tutorial/compile_run/compile_run.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../../_sources/kernel/linux/tutorial/compile_run/compile_run.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Linux 内核的编译与运行</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">获取源码</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">linux版本介绍</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">linux内核源码获取途径</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">编译</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">安装依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">设置内核编译选项</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">编译</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">运行</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">制作根文件系统</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qemu">qemu</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">启动内核</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">参考</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="linux">
+<h1>Linux 内核的编译与运行<a class="headerlink" href="#linux" title="Permalink to this heading">#</a></h1>
+<section id="id1">
+<h2>获取源码<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<section id="id2">
+<h3>linux版本介绍<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p>linux-next 树： 所有准备合并到 Linux 代码库的代码首先被合并到 linux-next 树。它代表的是 Linux 内核最新也是“最不稳定”的状态。大多数 Linux 内核开发者和测试人员使用这个来提高代码质量，为 Linus Torvalds 的后续提取做准备。请谨慎使用！</p></li>
+<li><p>发布候选版（RC） / 主线版： Linus 从 linux-next 树抽取代码并创建一个初始发布版本。这个初始发布版本的测试版称为 RC（发布候选）版本。一旦 RC 版本发布，Linus 只会接受对它的错误修复和性能退化相关的补丁。基础这些反馈，Linus 会每周发布一个 RC 内核，直到他对代码感到满意。RC 发行版本的标识是 -rc 后缀，后面跟一个数字。</p></li>
+<li><p>稳定版： 当 Linus 觉得最新的 RC 版本已稳定时，他会发布最终的“公开”版本。稳定发布版将会维护几周时间。像 Arch Linux 和 Fedora Linux 这样的前沿 Linux 发行版会使用此类版本。我建议你在试用 linux-next 或任何 RC 版本之前，先试一试此版本。</p></li>
+<li><p>LTS 版本： 每年最后一个稳定版将会再维护几年。这通常是一个较旧的版本，但它会会积极地维护并提供安全修复。Debian 的稳定版本会使用 Linux 内核的 LTS 版版本。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>linux内核源码获取途径<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://kernel.org/">kernel.org</a></p></li>
+<li><p><a class="reference external" href="https://github.com/torvalds/linux">github</a></p></li>
+<li><p><a class="reference external" href="https://mirrors.tuna.tsinghua.edu.cn/kernel/">清华镜像</a></p></li>
+</ul>
+</section>
+</section>
+<section id="id4">
+<h2>编译<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h2>
+<section id="id5">
+<h3>安装依赖<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h3>
+<p>对于Arch Linux，安装以下依赖：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>pacman<span class="w"> </span>-S<span class="w"> </span>base-devel<span class="w"> </span>bc<span class="w"> </span>coreutils<span class="w"> </span>cpio<span class="w"> </span>gettext<span class="w"> </span>initramfs<span class="w"> </span>kmod<span class="w"> </span>libelf<span class="w"> </span>ncurses<span class="w"> </span>pahole<span class="w"> </span>perl<span class="w"> </span>python<span class="w"> </span>rsync<span class="w"> </span>tar<span class="w"> </span>xz
+</pre></div>
+</div>
+<p>对于Ubuntu，安装以下依赖：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>bc<span class="w"> </span>binutils<span class="w"> </span>bison<span class="w"> </span>dwarves<span class="w"> </span>flex<span class="w"> </span>gcc<span class="w"> </span>git<span class="w"> </span>gnupg2<span class="w"> </span>gzip<span class="w"> </span>libelf-dev<span class="w"> </span>libncurses5-dev<span class="w"> </span>libssl-dev<span class="w"> </span>make<span class="w"> </span>openssl<span class="w"> </span>pahole<span class="w"> </span>perl-base<span class="w"> </span>rsync<span class="w"> </span>tar<span class="w"> </span>xz-utils<span class="w"> </span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>设置内核编译选项<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h3>
+<p>Linux内核的编译会查看<code class="docutils literal notranslate"><span class="pre">.config</span></code>这个配置文件，它指定了Linux内核中所有可能的配置选项。我们可以通过以下命令来修改配置文件：</p>
+<p>生成默认的配置文件，这会在你源码根目录下创建一个<code class="docutils literal notranslate"><span class="pre">.config</span></code>，里面包含了默认的配置选项。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>defconfig
+</pre></div>
+</div>
+<p>如果你对一个已有的<code class="docutils literal notranslate"><span class="pre">.config</span></code> 进行修改，修改之后，需要执行以下命令来更新配置文件。该命令会将你修改前的旧的<code class="docutils literal notranslate"><span class="pre">.config</span></code>保存到<code class="docutils literal notranslate"><span class="pre">.config.old</span></code>进行备份，并对.config进行更新且应用配置。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>olddefconfig
+</pre></div>
+</div>
+<p>同时，linux提供了TUI界面，你可以通过以下命令来打开TUI界面：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>menuconfig
+<span class="c1">## 或者</span>
+make<span class="w"> </span>nconfig
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h3>编译<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h3>
+<p>我们配置好上面的选项之后，就可以开始编译了。编译命令如下：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+</pre></div>
+</div>
+<p>其中，<code class="docutils literal notranslate"><span class="pre">-j$(nproc)</span></code>表示使用多核编译，<code class="docutils literal notranslate"><span class="pre">$(nproc)</span></code>表示当前机器的CPU核心数。</p>
+<p>编译完成之后，就可以在arch/x86/boot/中找到编译好的内核bzImage了。其实我们编译得到的有<code class="docutils literal notranslate"><span class="pre">vmlinux</span></code>和<code class="docutils literal notranslate"><span class="pre">bzImage</span></code>两个文件，其作用和介绍如下：</p>
+<hr class="docutils" />
+<p>在 Linux 内核编译过程中，<code class="docutils literal notranslate"><span class="pre">bzImage</span></code> 和 <code class="docutils literal notranslate"><span class="pre">vmlinux</span></code> 是两种不同形式的内核映像文件，它们各自有不同的用途和存储内容：</p>
+<ol class="arabic simple">
+<li><p><strong>vmlinux</strong></p></li>
+</ol>
+<ul class="simple">
+<li><p><strong>存储内容</strong>：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">vmlinux</span></code> 是内核编译后生成的原始、未压缩的内核文件，以 ELF（Executable and Linkable Format）格式保存。</p></li>
+<li><p>它包含了完整的内核代码、符号表信息以及调试信息，因此文件通常较大。</p></li>
+<li><p>由于其未压缩的特性，<code class="docutils literal notranslate"><span class="pre">vmlinux</span></code> 不能直接用于引导系统启动。</p></li>
+</ul>
+</li>
+<li><p><strong>用途</strong>：</p>
+<ul>
+<li><p>主要用于内核调试和分析，例如使用 <code class="docutils literal notranslate"><span class="pre">gdb</span></code> 或 <code class="docutils literal notranslate"><span class="pre">crash</span></code> 工具进行调试。</p></li>
+<li><p>它是生成其他可引导内核映像（如 <code class="docutils literal notranslate"><span class="pre">bzImage</span></code> 或 <code class="docutils literal notranslate"><span class="pre">vmlinuz</span></code>）的中间产物。</p></li>
+</ul>
+</li>
+</ul>
+<ol class="arabic simple" start="2">
+<li><p><strong>bzImage</strong></p></li>
+</ol>
+<ul class="simple">
+<li><p><strong>存储内容</strong>：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">bzImage</span></code> 是经过压缩的内核映像文件，通常使用 gzip 算法对 <code class="docutils literal notranslate"><span class="pre">vmlinux</span></code> 进行压缩生成。</p></li>
+<li><p>它包含了内核的核心功能、设备驱动程序和其他重要元素。</p></li>
+<li><p>文件大小显著减小，适合在启动过程中加载到有限的内存中。</p></li>
+</ul>
+</li>
+<li><p><strong>用途</strong>：</p>
+<ul>
+<li><p>是可引导的内核映像，用于系统启动。引导加载程序（如 GRUB）会从启动设备读取 <code class="docutils literal notranslate"><span class="pre">bzImage</span></code>，将其解压缩到内存中，然后将控制权转移给解压缩后的内核。</p></li>
+<li><p>适用于较大的内核，能够将其加载到高端内存（1M 以上）。</p></li>
+</ul>
+</li>
+</ul>
+<hr class="docutils" />
+<p>因此，如果要对编译出的linux内核进行二进制上的分析，分析的对象应该是<code class="docutils literal notranslate"><span class="pre">vmlinux</span></code></p>
+</section>
+</section>
+<section id="id8">
+<h2>运行<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h2>
+<p>上一步中，我们已经成功编译了linux内核，但是只有linux内核是无法启动的，还需要一个根文件系统和虚拟机来运行linux内核。</p>
+<section id="id9">
+<h3>制作根文件系统<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h3>
+<blockquote>
+<div><p>以下介绍来自：<a class="reference external" href="https://www.cnblogs.com/wwang/archive/2010/10/27/1862222.html">https://www.cnblogs.com/wwang/archive/2010/10/27/1862222.html</a></p>
+</div></blockquote>
+<p>Linux kernel在自身初始化完成之后，需要能够找到并运行第一个用户程序（这个程序通常叫做“init”程序）。用户程序存在于文件系统之中，因此，内核必须找到并挂载一个文件系统才可以成功完成系统的引导过程。
+在grub中提供了一个选项“root=”用来指定第一个文件系统，但随着硬件的发展，很多情况下这个文件系统也许是存放在USB设备，SCSI设备等等多种多样的设备之上，如果需要正确引导，USB或者SCSI驱动模块首先需要运行起来，可是不巧的是，这些驱动程序也是存放在文件系统里，因此会形成一个悖论。</p>
+<p>为解决此问题，Linux kernel提出了一个RAM disk的解决方案，把一些启动所必须的用户程序和驱动模块放在RAM disk中，这个RAM disk看上去和普通的disk一样，有文件系统，有cache，内核启动时，首先把RAM disk挂载起来，等到init程序和一些必要模块运行起来之后，再切到真正的文件系统之中。</p>
+<p>上面提到的RAM disk的方案实际上就是initrd。 如果仔细考虑一下，initrd虽然解决了问题但并不完美。 比如，disk有cache机制，对于RAM disk来说，这个cache机制就显得很多余且浪费空间；disk需要文件系统，那文件系统（如ext2等）必须被编译进kernel而不能作为模块来使用。</p>
+<p>Linux 2.6 kernel提出了一种新的实现机制，即initramfs。顾名思义，initramfs只是一种RAM filesystem而不是disk。initramfs实际是一个cpio归档，启动所需的用户程序和驱动模块被归档成一个文件。因此，不需要cache，也不需要文件系统。</p>
+<p>initramfs需要用到命令<code class="docutils literal notranslate"><span class="pre">mkinitramfs</span></code>，initrd的创建需要用到命令<code class="docutils literal notranslate"><span class="pre">mkinitrd</span></code></p>
+<p>这里不多介绍，详细的信息可以参考：</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://blog.linux.org.tw/~jserv/archives/001954.html">深入理解 Linux 2.6 的 initramfs 機制</a></p></li>
+<li><p><a class="reference external" href="http://www.linuxdevices.com/articles/AT4017834659.html">initramfs, a new model for initial RAM</a></p></li>
+</ul>
+<p>自己去制作根文件系统可能太过折腾，这里我们还是更推荐使用现有的脚本来创建。
+下面要介绍的就是syzkaller工具提供的<code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code>。你可以通过以下命令获取该脚本：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span><span class="nv">$IMAGE</span><span class="w"> </span><span class="c1">## 创建自定义目录</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$IMAGE</span>/
+wget<span class="w"> </span>https://raw.githubusercontent.com/google/syzkaller/master/tools/create-image.sh<span class="w"> </span>-O<span class="w"> </span>create-image.sh
+chmod<span class="w"> </span>+x<span class="w"> </span>create-image.sh
+</pre></div>
+</div>
+<p>执行脚本之前，需要下载安装这个脚本所依赖的软件包：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>debootstrap
+</pre></div>
+</div>
+<p>如果你直接执行<code class="docutils literal notranslate"><span class="pre">./create-image.sh</span></code>，脚本会自动下载并为你创建一个镜像<code class="docutils literal notranslate"><span class="pre">$IMAGE/bullseye.img</span></code>，
+如果你想要创建不同的镜像，你可以使用<code class="docutils literal notranslate"><span class="pre">--distribution</span></code>参数来指定，比如：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./create-image.sh<span class="w"> </span>--distribution<span class="w"> </span>buster
+</pre></div>
+</div>
+<p>更多更详细的用法，可以参考<code class="docutils literal notranslate"><span class="pre">./create-image.sh</span> <span class="pre">-h</span></code></p>
+</section>
+<section id="qemu">
+<h3>qemu<a class="headerlink" href="#qemu" title="Permalink to this heading">#</a></h3>
+<p>qemu就是常用的一个虚拟机，我们可以执行以下命令安装qemu</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>qemu-system-x86
+</pre></div>
+</div>
+</section>
+<section id="id10">
+<h3>启动内核<a class="headerlink" href="#id10" title="Permalink to this heading">#</a></h3>
+<p>参考以下命令启动虚拟机</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>qemu-system-x86_64<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-m<span class="w"> </span>2G<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-smp<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-kernel<span class="w"> </span><span class="nv">$KERNEL</span>/arch/x86_64/boot/bzImage<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-append<span class="w"> </span><span class="s2">&quot;console=ttyS0 root=/dev/sdb earlyprintk=serial net.ifnames=0&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-drive<span class="w"> </span><span class="nv">file</span><span class="o">=</span><span class="nv">$IMAGE</span>/bullseye.img,format<span class="o">=</span>raw<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-net<span class="w"> </span>user,host<span class="o">=</span><span class="m">10</span>.0.2.10,hostfwd<span class="o">=</span>tcp:127.0.0.1:10021-:22<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-net<span class="w"> </span>nic,model<span class="o">=</span>e1000<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-enable-kvm<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-nographic<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-pidfile<span class="w"> </span>vm.pid<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>vm.log
+</pre></div>
+</div>
+<p>这个命令是用于启动一个QEMU虚拟机的命令行，其中包含了多个参数，每个参数都有特定的作用。下面是每个参数的详细解释：</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">qemu-system-x86_64</span></code>：这是QEMU的二进制执行文件，用于模拟x86_64架构的系统。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">2G</span></code>：设置虚拟机的内存大小为2GB。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-smp</span> <span class="pre">2</span></code>：设置虚拟机的SMB（对称多处理）核心数为2，即虚拟机将模拟2个CPU核心。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-kernel</span> <span class="pre">$KERNEL/arch/x86_64/boot/bzImage</span></code>：指定要加载的Linux内核映像文件的路径。<code class="docutils literal notranslate"><span class="pre">$KERNEL</span></code>是一个环境变量，它应该在执行命令之前被设置为内核源代码目录的路径。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-append</span> <span class="pre">&quot;console=ttyS0</span> <span class="pre">root=/dev/sdb</span> <span class="pre">earlyprintk=serial</span> <span class="pre">net.ifnames=0&quot;</span></code>：指定启动参数。这里设置了控制台输出到ttyS0（通常是第一个串行端口），根文件系统挂载在/dev/sdb，启用早期打印到串行端口，以及禁用预测网络接口名称（net.ifnames=0）。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-drive</span> <span class="pre">file=$IMAGE/bullseye.img,format=raw</span></code>：指定虚拟硬盘的映像文件。<code class="docutils literal notranslate"><span class="pre">$IMAGE</span></code>是一个环境变量，它应该在执行命令之前被设置为包含虚拟硬盘映像文件的目录的路径。这里使用的是原始格式（raw）的磁盘映像。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-net</span> <span class="pre">user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22</span></code>：设置用户模式网络，并指定虚拟机的IP地址为10.0.2.10，同时设置端口转发，将主机的10021端口转发到虚拟机的22端口（通常是SSH服务的端口）。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-net</span> <span class="pre">nic,model=e1000</span></code>：添加一个以太网设备，使用e1000模型。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-enable-kvm</span></code>：启用KVM（Kernel-based Virtual Machine）硬件加速，如果宿主机支持的话。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-nographic</span></code>：不使用图形界面，即在没有图形显示的情况下运行虚拟机。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-pidfile</span> <span class="pre">vm.pid</span></code>：将虚拟机进程的PID（进程ID）写入到vm.pid文件中。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">2&gt;&amp;1</span></code>：将标准错误（stderr）重定向到标准输出（stdout）。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">|</span> <span class="pre">tee</span> <span class="pre">vm.log</span></code>：将标准输出的内容同时发送到控制台和vm.log文件。</p></li>
+</ol>
+<p>整个命令行的意思是启动一个使用2GB内存、2个CPU核心、指定内核和磁盘映像的虚拟机，配置网络和端口转发，启用KVM加速，不使用图形界面，并将所有输出保存到vm.log文件中。</p>
+<p>运行结束之后，可以使用<code class="docutils literal notranslate"><span class="pre">Ctrl+A</span> <span class="pre">x</span></code>退出qemu。</p>
+</section>
+</section>
+<section id="id11">
+<h2>参考<a class="headerlink" href="#id11" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://linux.cn/article-16252-1.html">https://linux.cn/article-16252-1.html</a></p></li>
+<li><p><a class="reference external" href="https://www.baifachuan.com/posts/211b427f.html">https://www.baifachuan.com/posts/211b427f.html</a></p></li>
+<li><p><a class="reference external" href="https://www.cnblogs.com/wwang/archive/2010/10/27/1862222.html">https://www.cnblogs.com/wwang/archive/2010/10/27/1862222.html</a></p></li>
+<li><p><a class="reference external" href="http://blog.linux.org.tw/~jserv/archives/001954.html">http://blog.linux.org.tw/~jserv/archives/001954.html</a></p></li>
+<li><p><a class="reference external" href="http://www.linuxdevices.com/articles/AT4017834659.html">http://www.linuxdevices.com/articles/AT4017834659.html</a></p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Linux Kernel Tutorial</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../build_image/build_image.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">如何制作简单的Linux系统镜像</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">获取源码</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">linux版本介绍</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">linux内核源码获取途径</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">编译</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">安装依赖</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">设置内核编译选项</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">编译</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">运行</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">制作根文件系统</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qemu">qemu</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">启动内核</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">参考</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Killuayz
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

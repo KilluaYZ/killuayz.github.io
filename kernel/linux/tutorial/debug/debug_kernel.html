@@ -1,0 +1,880 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Linux内核调试 &#8212; Kernel Fuzzing Tutorial  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/clipboard.min.js"></script>
+    <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'kernel/linux/tutorial/debug/debug_kernel';</script>
+    <link rel="canonical" href="https://nix.dev/kernel/linux/tutorial/debug/debug_kernel.html" />
+    <link rel="shortcut icon" href="../../../../_static/favicon.png"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="简单的驱动程序：VirtualDisk字符设备驱动" href="../simple_driver/simple_driver.html" />
+    <link rel="prev" title="如何制作简单的Linux系统镜像" href="../build_image/build_image.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><div class="logo">
+  <a href="/">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <img src="/_static/img/linux.svg" alt="">
+      <span>Kernel Fuzzing</span>
+      <span>V0.11.0</span>
+    </div>
+  </a>
+</div>
+
+<iframe
+  src="https://ghbtns.com/github-btn.html?user=Killuayz&repo=Kernel-Fuzzing-Tutorial&type=star&count=true&size=large"
+  frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+
+<p>Notes about Kernel Fuzzing</p></div>
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../../index.html">Kernel</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../../index.html">Linux Kernel</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3 current active has-children"><a class="reference internal" href="../index.html">Linux Kernel Tutorial</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../compile_run/compile_run.html">Linux 内核的编译与运行</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../build_image/build_image.html">如何制作简单的Linux系统镜像</a></li>
+<li class="toctree-l4 current active"><a class="current reference internal" href="#">Linux内核调试</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../simple_driver/simple_driver.html">简单的驱动程序：VirtualDisk字符设备驱动</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../load_module/linux_kernel_load_module.html">如何让Linux内核编译驱动模块并且加载驱动模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../udev/udev.html">Linux的设备管理器——udev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sysfs/sysfs.html">Sysfs介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ebpf/ebpf.html">eBPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ioctl/ioctl.html">系统调用ioctl介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../device_driver_arch/device_driver_arch.html">Linux设备驱动框架</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../xarray/xarray.html">基础数据结构介绍——XArray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../globalmem_driver/globalmem_driver.html">globalmem 虚拟设备</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../bugs/index.html">Linux Kernel Bugs</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/cve/CVE-2024-50274/CVE-2024-50274.html">CVE-2024-50274</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/cve/CVE-2024-43894/CVE-2024-43894.html">CVE-2024-43894</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/gpf_drm_crtc_next_vblank_start/gpf_drm_crtc_next_vblank_start.html">general protection fault in drm_crtc_next_vblank_start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/uaf_netdev_unregister_kobject/uaf_netdev_unregister_kobject.html">KASAN: use-after-free Read in netdev_unregister_kobject</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/npd_read_ida_free/npd_read_ida_free.html">KASAN: null-ptr-deref Read in ida_free (4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/gpf_hci_abort_conn/gpf_hci_abort_conn.html">general protection fault in hci_abort_conn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../fuzzer/index.html">Fuzzer</a><input checked class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../fuzzer/syzkaller/index.html">SyzKaller</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../fuzzer/syzkaller/0-introduction/0-introduction.html">Syzkaller 介绍</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../simulator/index.html">Simulator</a><input checked class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../simulator/qemu/index.html">QEMU</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/0-how-to-use-kvm/0-how-to-use-kvm.html">如何使用KVM运行系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/1-how-to-share-directory/1-how-to-share-directory.html">如何在HOST和GUEST之间建立共享目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/2-how-to-connect-net/2-how-to-connect-net.html">QEMU中如何配置网络</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.html">如何使用QEMU/KVM运行MacOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html">在QEMU中加载自定义固件（firmware）失败</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../paper/index.html">Paper</a><input checked class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../paper/paper.html">Papers About Kernel Fuzzing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../nix/index.html">Nix</a><input checked class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../nix/install-nix.html">Install Nix</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/tutorials/index.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/first-steps/index.html">First steps</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/ad-hoc-shell-environments.html">Ad hoc shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/reproducible-scripts.html">Reproducible interpreted scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/declarative-shell.html">Declarative shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs.html">Towards reproducibility: pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/nix-language.html">Nix language basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/packaging-existing-software.html">Packaging existing software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/callpackage.html">Package parameters and overrides with <code class="docutils literal notranslate"><span class="pre">callPackage</span></code></a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/working-with-local-files.html">Working with local files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/cross-compilation.html">Cross compilation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/module-system/index.html">Module system</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/module-system/a-basic-module/index.html">1. A basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/module-system/deep-dive.html">2. Module system deep dive</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/nixos/index.html">NixOS</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/nixos-configuration-on-vm.html">NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/building-bootable-iso-image.html">Building a bootable ISO image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/building-and-running-docker-images.html">Building and running Docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/integration-testing-using-virtual-machines.html">Integration testing with NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/provisioning-remote-machines.html">Provisioning remote machines via SSH</a></li>
+
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/installing-nixos-on-a-raspberry-pi.html">Installing NixOS on a Raspberry Pi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/deploying-nixos-using-terraform.html">Deploying NixOS using Terraform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/binary-cache-setup.html">Setting up an HTTP binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/distributed-builds-setup.html">Setting up distributed builds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/guides/index.html">Guides</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/guides/recipes/index.html">Recipes</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/add-binary-cache.html">Configure Nix to use a custom binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/direnv.html">Automatic environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/sharing-dependencies.html">Dependencies in the development shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/dependency-management.html">Managing remote sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/python-environment.html">Python development environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/post-build-hook.html">Setting up post-build hooks</a></li>
+
+
+
+
+
+
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/continuous-integration-github-actions.html">Continuous integration with GitHub Actions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/best-practices.html">Best practices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/reference/index.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/reference/glossary.html">Glossary</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/reference/nix-manual.html">Nix reference manual</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/development/">Nix pre-release (development)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/latest/">Nix @nix-latest@ (latest)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/rolling/">Nix @nix-rolling@ (in Nixpkgs rolling)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/stable/">Nix @nix-stable@ (in Nixpkgs @nixpkgs-stable@)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/prev-stable/">Nix @nix-prev-stable@ (in Nixpkgs @nixpkgs-prev-stable@)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixpkgs/stable/">Nixpkgs manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixos/stable/">NixOS manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/">Community projects</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/awesome-nix">Support tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/recommended-reading.html">Further reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/reference/pinning-nixpkgs.html">Pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/concepts/index.html">Concepts</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/concepts/flakes.html">Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/concepts/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/flakes/index.html">Flakes</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/flakes/flake_intro.html">Introduction to Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/flakes/flake_getting_start.html">Getting Start</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/contributing/index.html">Contributing</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/contributing/how-to-contribute.html">How to contribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/contributing/how-to-get-help.html">How to get help</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/contributing/documentation/index.html">Contributing documentation</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/resources.html">Documentation resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/diataxis.html">Documentation framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/style-guide.html">Style guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/writing-a-tutorial.html">How to write a tutorial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/acknowledgments/index.html">Acknowledgements</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/acknowledgments/sponsors.html">Sponsors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../wiki/index.html">Wiki</a><input checked class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/0-drm/drm.html">DRM介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/1-nix_with_glibc_compile_error/nix_with_glibc_compile_error.html">Nix打包项目时遇到Cannot find stdlib.h</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/2-nix_golang_get_proxy_connection_refused/nix_golang_get_proxy_connection_refused.html">使用Nix打包Golang项目时报出错误<code class="docutils literal notranslate"><span class="pre">Connection</span> <span class="pre">Refused</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/3-perf_event_open/perf_event_open.html">perf_event_open 函数介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/4-compile_v4.x_undefined_ilog2_NaN/compile_v4.x_undefined_ilog2_NaN.html">在编译linux内核v4.x错误undefined reference to `____ilog2_NaN’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/5-compile_linux_modules/compile_linux_modules.html">如何编译Linux的全部模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/6-specific_keyring_file_not_found/specific_keyring_file_not_found.html">编译时遇到specified keyring file xxx not found</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/7-cannot_insert_hardware_breakpoint/cannot_insert_hardware_breakpoint.html">Cannot insert hardware breakpoint 11:Remote failure reply: 22.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/8-employ-own-overleaf/employ_own_overleaf.html">部署自己的Overleaf</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial/issues/new?title=Issue%20on%20page%20%2Fkernel/linux/tutorial/debug/debug_kernel.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../../_sources/kernel/linux/tutorial/debug/debug_kernel.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Linux内核调试</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">内核调试配置选项</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">编译</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">开始调试</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qemu">运行QEMU</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gdb">命令行使用gdb连接</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vscode">使用vscode进行调试</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">打印调式信息</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-bug-on">BUG() 和 BUG_ON()</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dump-stack">dump_stack()</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#printk">printk()</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">简述</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#log">LOG等级</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">参考的qemu运行脚本</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="linux">
+<span id="linux-kernel-debug"></span><h1>Linux内核调试<a class="headerlink" href="#linux" title="Permalink to this heading">#</a></h1>
+<blockquote>
+<div><p>本章内容主要介绍如何使用gdb+qemu进行linux内核的调试
+参考https://www.cnblogs.com/alantu2018/p/8997149.html</p>
+</div></blockquote>
+<section id="id1">
+<h2>内核调试配置选项<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<p>内核中已经有了很多用于调试的功能，但是这些功能会带来性能开销，输出很多信息，因此默认是关闭的，如果想要调试内核，我们需要将其打开。</p>
+<p>调试Linux内核时，需要开启的编译选项包括但不限于以下几个：</p>
+<ol class="arabic simple">
+<li><p><strong>CONFIG_DEBUG_INFO</strong>：这个选项会使得编译出的内核包含全部的调试信息，这对于使用gdb进行调试是非常必要的。</p></li>
+<li><p><strong>CONFIG_KGDB</strong>：启用这个选项可以在内核配置菜单中启用kgdb支持，kgdb是一个用于内核调试的工具，支持远程调试。</p></li>
+<li><p><strong>CONFIG_FTRACE</strong>：启用ftrace可以用于函数跟踪，这对于调试内核函数非常有用。</p></li>
+<li><p><strong>CONFIG_DEBUG_PAGEALLOC</strong>：这个选项用于调试页分配问题，可以发现内存泄漏的错误。</p></li>
+<li><p><strong>CONFIG_DEBUG_SPINLOCK</strong>：这个选项用于调试自旋锁相关问题，可以发现spinlock未初始化及各种其他的错误。</p></li>
+<li><p><strong>CONFIG_DEBUG_SPINLOCK_SLEEP</strong>：这个选项用于检查spinlock持有者睡眠的情况，有助于排除死锁引起的错误。</p></li>
+<li><p><strong>CONFIG_DEBUG_STACK_USAGE</strong>：这个选项用于跟踪内核栈的溢出错误，有助于发现栈溢出问题。</p></li>
+<li><p><strong>CONFIG_DEBUG_DRIVER</strong>：这个选项用于输出驱动核心的调试信息，有助于调试驱动相关的问题。</p></li>
+</ol>
+<p>这些选项可以通过<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">menuconfig</span></code>命令在内核配置菜单中设置。开启这些选项后，可以编译出包含调试信息的内核，方便后续的调试工作。Linux内核还提供了很多调试选项，大家可以自行去了解。</p>
+</section>
+<section id="id2">
+<h2>编译<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
+<p>使用make命令编译</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>-j
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>开始调试<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
+<section id="qemu">
+<h3>运行QEMU<a class="headerlink" href="#qemu" title="Permalink to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>qemu-system-x86_64<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-m<span class="w"> </span>2G<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-smp<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-kernel<span class="w"> </span><span class="nv">$KERNEL</span>/arch/x86_64/boot/bzImage<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-append<span class="w"> </span><span class="s2">&quot;console=ttyS0 root=/dev/sdb earlyprintk=serial net.ifnames=0 nokaslr&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-drive<span class="w"> </span><span class="nv">file</span><span class="o">=</span><span class="nv">$IMAGE</span>/bullseye.img,format<span class="o">=</span>raw<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-net<span class="w"> </span>user,host<span class="o">=</span><span class="m">10</span>.0.2.10,hostfwd<span class="o">=</span>tinfo<span class="w"> </span>breakpointscp:127.0.0.1:10021-:22<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-net<span class="w"> </span>nic,model<span class="o">=</span>e1000<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-enable-kvm<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-nographic<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-pidfile<span class="w"> </span>vm.pid<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span>-s<span class="w"> </span>-S<span class="w"> </span><span class="se">\</span>
+<span class="w">	</span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>vm.log
+</pre></div>
+</div>
+<p>其中，<code class="docutils literal notranslate"><span class="pre">-smp</span> <span class="pre">1</span></code>建议开启，只要不是为了研究SMP并发，就设为1，不然调试难度可能有点大。建议不要加<code class="docutils literal notranslate"><span class="pre">-enable-kvm</span></code>，否则添加断点的时候，就要使用hbreak，不太方便，调试时候对性能也不会有太高的要求。<code class="docutils literal notranslate"><span class="pre">-append</span></code>中是传给kernel的参数，<strong>一定</strong>带上<code class="docutils literal notranslate"><span class="pre">nokaslr</span></code>，关闭内核地址随机化，<strong>否则断点无法触发，也无法进行单步调试</strong>。<code class="docutils literal notranslate"><span class="pre">-s</span></code>是-s shorthand for -gdb tcp::1234，设置gdb调试的默认端口。<code class="docutils literal notranslate"><span class="pre">-S</span></code>是-S freeze CPU at startup (use ‘c’ to start execution)，表示在入口处停下。</p>
+</section>
+<section id="gdb">
+<h3>命令行使用gdb连接<a class="headerlink" href="#gdb" title="Permalink to this heading">#</a></h3>
+<p>在启动qemu之后，我们就开启终端执行gdb</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gdb<span class="w"> </span>-tui<span class="w"> </span><span class="nv">$KERNEL</span>/vmlinux
+</pre></div>
+</div>
+<p>进入到gdb的界面之后，使用下面的命令，就可以调试了</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>target<span class="w"> </span>remote<span class="w"> </span>localhost:1234
+</pre></div>
+</div>
+<p>只用最原版的gdb可能比较麻烦，我们可以添加一个gdb的模组，让gdb更加好用。这里推荐使用<a class="reference external" href="https://pwndbg.re/">pwndbg</a>，提供了更美观的界面和更丰富直观的提示信息，调试起来更舒服。</p>
+<p><img alt="pwndbg界面" src="../../../../_images/2.gif" /></p>
+</section>
+<section id="vscode">
+<h3>使用vscode进行调试<a class="headerlink" href="#vscode" title="Permalink to this heading">#</a></h3>
+<p>配置launch.json如下，启动qemu之后，连接即可。</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 使用 IntelliSense 了解相关属性。 </span>
+<span class="w">    </span><span class="c1">// 悬停以查看现有属性的描述。</span>
+<span class="w">    </span><span class="c1">// 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.2.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;configurations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;(gdb) linux&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cppdbg&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;request&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;launch&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// &quot;preLaunchTask&quot;: &quot;vm&quot;, //if you don&#39;t want to launch vm via vscode, common this line!</span>
+<span class="w">            </span><span class="nt">&quot;program&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;${workspaceRoot}/vmlinux&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;miDebuggerServerAddress&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost:1234&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">            </span><span class="nt">&quot;stopAtEntry&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;cwd&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;${workspaceFolder}&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;environment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">            </span><span class="nt">&quot;externalConsole&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;MIMode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;miDebuggerArgs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;-n&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;targetArchitecture&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x64&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">&quot;hardwareBreakpoints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">&quot;require&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="c1">//&quot;logging&quot;: { &quot;engineLogging&quot;: true },</span>
+<span class="w">            </span><span class="nt">&quot;setupCommands&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                </span><span class="p">{</span>
+<span class="w">                    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hardware breakpoint at start&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;-break-insert -h -f start_kernel&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// specify your entry point label, mine was &#39;start_kernel&#39;</span>
+<span class="w">                    </span><span class="nt">&quot;ignoreFailures&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">                </span><span class="c1">// {</span>
+<span class="w">                </span><span class="c1">//     &quot;text&quot;: &quot;set arch i386:x86-64:intel&quot;,</span>
+<span class="w">                </span><span class="c1">//     &quot;ignoreFailures&quot;: false</span>
+<span class="w">                </span><span class="c1">// },</span>
+<span class="w">                </span><span class="c1">// {</span>
+<span class="w">                </span><span class="c1">//     &quot;text&quot;: &quot;dir .&quot;,</span>
+<span class="w">                </span><span class="c1">//     &quot;ignoreFailures&quot;: false</span>
+<span class="w">                </span><span class="c1">// },</span>
+<span class="w">                </span><span class="c1">// {</span>
+<span class="w">                </span><span class="c1">//     &quot;text&quot;: &quot;add-auto-load-safe-path ./&quot;,</span>
+<span class="w">                </span><span class="c1">//     &quot;ignoreFailures&quot;: false</span>
+<span class="w">                </span><span class="c1">// },</span>
+<span class="w">                </span><span class="p">{</span>
+<span class="w">                    </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;-enable-pretty-printing&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nt">&quot;ignoreFailures&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">]</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>最终我们在Vscode中便可以进行调试</p>
+<p><img alt="Vscode调试Linux Kernel" src="../../../../_images/11.png" /></p>
+</section>
+</section>
+<section id="id4">
+<h2>打印调式信息<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h2>
+<section id="bug-bug-on">
+<h3>BUG() 和 BUG_ON()<a class="headerlink" href="#bug-bug-on" title="Permalink to this heading">#</a></h3>
+<p>BUG()和BUG_ON()可以方便地标记BUG，他们被定义在<code class="docutils literal notranslate"><span class="pre">include/asm-generic/bug.h</span></code>中。</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#define BUG() do {		\</span>
+<span class="cp">	do {} while (1);	\</span>
+<span class="cp">	unreachable();		\</span>
+<span class="cp">} while (0)</span>
+
+<span class="cp">#define BUG_ON(condition) do { if (unlikely(condition)) BUG(); } while (0)</span>
+</pre></div>
+</div>
+</section>
+<section id="dump-stack">
+<h3>dump_stack()<a class="headerlink" href="#dump-stack" title="Permalink to this heading">#</a></h3>
+<p>有些时候，只需要在终端上打印一下栈的回溯信息来帮助你调试。这时可以使用dump_stack()。这个函数只在终端上打印寄存器上下文和函数的
+跟踪栈。</p>
+</section>
+<section id="printk">
+<h3>printk()<a class="headerlink" href="#printk" title="Permalink to this heading">#</a></h3>
+<section id="id5">
+<h4>简述<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h4>
+<p>内核提供的格式化打印函数，用法和printf()类似，在几乎任何地方，任何时候（中断上下文，进程上下文等）都可以使用，但是在终端初始化的时候是不能调用的。
+也可以使用early_printk()，它在系统启动初期就具备打印能力，但只支持部分硬件体系。</p>
+</section>
+<section id="log">
+<h4>LOG等级<a class="headerlink" href="#log" title="Permalink to this heading">#</a></h4>
+<p>printk相比printf多了一个指定LOG等级的功能，内核根据这个等级判断是否将它打印在终端上。
+内核支持以下几种日志级别。
+如果没有提供日志级别，就默认是<code class="docutils literal notranslate"><span class="pre">KERN_WARNING</span></code>。</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#define KERN_EMERG	KERN_SOH &quot;&quot;	</span><span class="cm">/* system is unusable */</span>
+<span class="cp">#define KERN_ALERT	KERN_SOH &quot;&quot;	</span><span class="cm">/* action must be taken immediately */</span>
+<span class="cp">#define KERN_CRIT	KERN_SOH &quot;&quot;	</span><span class="cm">/* critical conditions */</span>
+<span class="cp">#define KERN_ERR	KERN_SOH &quot;&quot;	</span><span class="cm">/* error conditions */</span>
+<span class="cp">#define KERN_WARNING	KERN_SOH &quot;&quot;	</span><span class="cm">/* warning conditions */</span>
+<span class="cp">#define KERN_NOTICE	KERN_SOH &quot;&quot;	</span><span class="cm">/* normal but significant condition */</span>
+<span class="cp">#define KERN_INFO	KERN_SOH &quot;&quot;	</span><span class="cm">/* informational */</span>
+<span class="cp">#define KERN_DEBUG	KERN_SOH &quot;&quot;	</span><span class="cm">/* debug-level messages */</span>
+<span class="cp">#define KERN_DEFAULT	KERN_SOH &quot;&quot;	</span><span class="cm">/* the default kernel loglevel */</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="id6">
+<h2>参考的qemu运行脚本<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+
+<span class="nv">KERNEL</span><span class="o">=</span>./arch/x86_64/boot/bzImage
+<span class="c1"># KERNEL=/new-pool/linux_kernel/kernel/v6.10/arch/x86/boot/bzImage</span>
+<span class="nv">IMAGE</span><span class="o">=</span>/new-pool/linux_kernel/Kernel_Fuzzing_Env/kernel/images/buster.img
+
+<span class="c1"># 初始化 DEBUG 为 0，表示未启用调试模式</span>
+<span class="nv">DEBUG</span><span class="o">=</span><span class="m">0</span>
+<span class="nv">DEBUG_FLAGS</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+<span class="nv">KVM_FLAGS</span><span class="o">=</span><span class="s2">&quot;-enable-kvm&quot;</span>
+<span class="c1"># 使用 getopts 处理短选项 -d</span>
+<span class="k">while</span><span class="w"> </span><span class="nb">getopts</span><span class="w"> </span><span class="s2">&quot;:d&quot;</span><span class="w"> </span>opt<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="nv">$opt</span><span class="w"> </span><span class="k">in</span>
+<span class="w">        </span>d<span class="o">)</span>
+<span class="w">            </span><span class="nv">DEBUG</span><span class="o">=</span><span class="m">1</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span><span class="se">\?</span><span class="o">)</span>
+<span class="w">            </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;无效的选项: -</span><span class="nv">$OPTARG</span><span class="s2">&quot;</span>
+<span class="w">            </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">    </span><span class="k">esac</span>
+<span class="k">done</span>
+
+<span class="c1"># 根据 DEBUG 的值输出结果</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$DEBUG</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;调试模式已启用。&quot;</span>
+<span class="w">        </span><span class="nv">DEBUG_FLAGS</span><span class="o">=</span><span class="s2">&quot; -s -S &quot;</span>
+<span class="w">        </span><span class="nv">KVM_FLAGS</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+<span class="k">else</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;调试模式未启用。&quot;</span>
+<span class="k">fi</span>
+
+sudo<span class="w"> </span>qemu-system-x86_64<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-m<span class="w"> </span>2G<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-smp<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-kernel<span class="w"> </span><span class="nv">$KERNEL</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-append<span class="w"> </span><span class="s2">&quot;console=ttyS0 root=/dev/sda earlyprintk=serial net.ifnames=0 nokaslr&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-drive<span class="w"> </span><span class="nv">file</span><span class="o">=</span><span class="nv">$IMAGE</span>,format<span class="o">=</span>raw<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-net<span class="w"> </span>user,host<span class="o">=</span><span class="m">10</span>.0.2.10,hostfwd<span class="o">=</span>tcp:127.0.0.1:10021-:22<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-net<span class="w"> </span>nic,model<span class="o">=</span>e1000<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="nv">$KVM_FLAGS</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-nographic<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="nv">$DEBUG_FLAGS</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>-pidfile<span class="w"> </span>vm.pid<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>vm.log
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../build_image/build_image.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">如何制作简单的Linux系统镜像</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../simple_driver/simple_driver.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">简单的驱动程序：VirtualDisk字符设备驱动</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">内核调试配置选项</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">编译</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">开始调试</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#qemu">运行QEMU</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gdb">命令行使用gdb连接</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#vscode">使用vscode进行调试</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">打印调式信息</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-bug-on">BUG() 和 BUG_ON()</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dump-stack">dump_stack()</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#printk">printk()</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">简述</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#log">LOG等级</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">参考的qemu运行脚本</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Killuayz
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

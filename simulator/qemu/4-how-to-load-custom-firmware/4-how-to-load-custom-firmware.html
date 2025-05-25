@@ -1,0 +1,956 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>在QEMU中加载自定义固件（firmware）失败 &#8212; Kernel Fuzzing Tutorial  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware';</script>
+    <link rel="canonical" href="https://nix.dev/simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html" />
+    <link rel="shortcut icon" href="../../../_static/favicon.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Paper" href="../../../paper/index.html" />
+    <link rel="prev" title="如何使用QEMU/KVM运行MacOS" href="../3-run-macos-on-kvm/3-run-macos-on-kvm.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><div class="logo">
+  <a href="/">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <img src="/_static/img/linux.svg" alt="">
+      <span>Kernel Fuzzing</span>
+      <span>V0.11.0</span>
+    </div>
+  </a>
+</div>
+
+<iframe
+  src="https://ghbtns.com/github-btn.html?user=Killuayz&repo=Kernel-Fuzzing-Tutorial&type=star&count=true&size=large"
+  frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+
+<p>Notes about Kernel Fuzzing</p></div>
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../kernel/index.html">Kernel</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../kernel/linux/index.html">Linux Kernel</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../kernel/linux/tutorial/index.html">Linux Kernel Tutorial</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/compile_run/compile_run.html">Linux 内核的编译与运行</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/build_image/build_image.html">如何制作简单的Linux系统镜像</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/debug/debug_kernel.html">Linux内核调试</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/simple_driver/simple_driver.html">简单的驱动程序：VirtualDisk字符设备驱动</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/load_module/linux_kernel_load_module.html">如何让Linux内核编译驱动模块并且加载驱动模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/udev/udev.html">Linux的设备管理器——udev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/sysfs/sysfs.html">Sysfs介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/ebpf/ebpf.html">eBPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/ioctl/ioctl.html">系统调用ioctl介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/device_driver_arch/device_driver_arch.html">Linux设备驱动框架</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/xarray/xarray.html">基础数据结构介绍——XArray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/tutorial/globalmem_driver/globalmem_driver.html">globalmem 虚拟设备</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../kernel/linux/bugs/index.html">Linux Kernel Bugs</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/cve/CVE-2024-50274/CVE-2024-50274.html">CVE-2024-50274</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/cve/CVE-2024-43894/CVE-2024-43894.html">CVE-2024-43894</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/gpf_drm_crtc_next_vblank_start/gpf_drm_crtc_next_vblank_start.html">general protection fault in drm_crtc_next_vblank_start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/uaf_netdev_unregister_kobject/uaf_netdev_unregister_kobject.html">KASAN: use-after-free Read in netdev_unregister_kobject</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/npd_read_ida_free/npd_read_ida_free.html">KASAN: null-ptr-deref Read in ida_free (4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../kernel/linux/bugs/syzbot/gpf_hci_abort_conn/gpf_hci_abort_conn.html">general protection fault in hci_abort_conn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../fuzzer/index.html">Fuzzer</a><input checked class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../fuzzer/syzkaller/index.html">SyzKaller</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../fuzzer/syzkaller/0-introduction/0-introduction.html">Syzkaller 介绍</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">Simulator</a><input checked class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">QEMU</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../0-how-to-use-kvm/0-how-to-use-kvm.html">如何使用KVM运行系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../1-how-to-share-directory/1-how-to-share-directory.html">如何在HOST和GUEST之间建立共享目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../2-how-to-connect-net/2-how-to-connect-net.html">QEMU中如何配置网络</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../3-run-macos-on-kvm/3-run-macos-on-kvm.html">如何使用QEMU/KVM运行MacOS</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">在QEMU中加载自定义固件（firmware）失败</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../paper/index.html">Paper</a><input checked class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../paper/paper.html">Papers About Kernel Fuzzing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../nix/index.html">Nix</a><input checked class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../nix/install-nix.html">Install Nix</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/tutorials/index.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/tutorials/first-steps/index.html">First steps</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/ad-hoc-shell-environments.html">Ad hoc shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/reproducible-scripts.html">Reproducible interpreted scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/declarative-shell.html">Declarative shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs.html">Towards reproducibility: pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/nix-language.html">Nix language basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/packaging-existing-software.html">Packaging existing software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/callpackage.html">Package parameters and overrides with <code class="docutils literal notranslate"><span class="pre">callPackage</span></code></a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/working-with-local-files.html">Working with local files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/tutorials/cross-compilation.html">Cross compilation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/tutorials/module-system/index.html">Module system</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/module-system/a-basic-module/index.html">1. A basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/module-system/deep-dive.html">2. Module system deep dive</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/tutorials/nixos/index.html">NixOS</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/nixos-configuration-on-vm.html">NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/building-bootable-iso-image.html">Building a bootable ISO image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/building-and-running-docker-images.html">Building and running Docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/integration-testing-using-virtual-machines.html">Integration testing with NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/provisioning-remote-machines.html">Provisioning remote machines via SSH</a></li>
+
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/installing-nixos-on-a-raspberry-pi.html">Installing NixOS on a Raspberry Pi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/deploying-nixos-using-terraform.html">Deploying NixOS using Terraform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/binary-cache-setup.html">Setting up an HTTP binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/tutorials/nixos/distributed-builds-setup.html">Setting up distributed builds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/guides/index.html">Guides</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/guides/recipes/index.html">Recipes</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/add-binary-cache.html">Configure Nix to use a custom binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/direnv.html">Automatic environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/sharing-dependencies.html">Dependencies in the development shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/dependency-management.html">Managing remote sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/python-environment.html">Python development environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/post-build-hook.html">Setting up post-build hooks</a></li>
+
+
+
+
+
+
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/guides/recipes/continuous-integration-github-actions.html">Continuous integration with GitHub Actions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/guides/best-practices.html">Best practices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/guides/troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/guides/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/reference/index.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/reference/glossary.html">Glossary</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/reference/nix-manual.html">Nix reference manual</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/development/">Nix pre-release (development)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/latest/">Nix @nix-latest@ (latest)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/rolling/">Nix @nix-rolling@ (in Nixpkgs rolling)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/stable/">Nix @nix-stable@ (in Nixpkgs @nixpkgs-stable@)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/prev-stable/">Nix @nix-prev-stable@ (in Nixpkgs @nixpkgs-prev-stable@)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixpkgs/stable/">Nixpkgs manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixos/stable/">NixOS manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/">Community projects</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/awesome-nix">Support tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/recommended-reading.html">Further reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/reference/pinning-nixpkgs.html">Pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/concepts/index.html">Concepts</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/concepts/flakes.html">Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/concepts/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/flakes/index.html">Flakes</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/flakes/flake_intro.html">Introduction to Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/flakes/flake_getting_start.html">Getting Start</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/contributing/index.html">Contributing</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/contributing/how-to-contribute.html">How to contribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/contributing/how-to-get-help.html">How to get help</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../nix/contributing/documentation/index.html">Contributing documentation</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/resources.html">Documentation resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/diataxis.html">Documentation framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/style-guide.html">Style guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../nix/contributing/documentation/writing-a-tutorial.html">How to write a tutorial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../nix/acknowledgments/index.html">Acknowledgements</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../nix/acknowledgments/sponsors.html">Sponsors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../wiki/index.html">Wiki</a><input checked class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/0-drm/drm.html">DRM介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/1-nix_with_glibc_compile_error/nix_with_glibc_compile_error.html">Nix打包项目时遇到Cannot find stdlib.h</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/2-nix_golang_get_proxy_connection_refused/nix_golang_get_proxy_connection_refused.html">使用Nix打包Golang项目时报出错误<code class="docutils literal notranslate"><span class="pre">Connection</span> <span class="pre">Refused</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/3-perf_event_open/perf_event_open.html">perf_event_open 函数介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/4-compile_v4.x_undefined_ilog2_NaN/compile_v4.x_undefined_ilog2_NaN.html">在编译linux内核v4.x错误undefined reference to `____ilog2_NaN’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/5-compile_linux_modules/compile_linux_modules.html">如何编译Linux的全部模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/6-specific_keyring_file_not_found/specific_keyring_file_not_found.html">编译时遇到specified keyring file xxx not found</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/7-cannot_insert_hardware_breakpoint/cannot_insert_hardware_breakpoint.html">Cannot insert hardware breakpoint 11:Remote failure reply: 22.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../wiki/8-employ-own-overleaf/employ_own_overleaf.html">部署自己的Overleaf</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial/issues/new?title=Issue%20on%20page%20%2Fsimulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../_sources/simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>在QEMU中加载自定义固件（firmware）失败</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">问题描述</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">问题分析</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">知识补充</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#initramfs">initramfs</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">主要功能与特点：</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">initramfs</span></code>结构</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">工作流程：</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">应用场景示例：</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">生成与定制：</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">解决方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">补充</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linux-firmware">Linux中设备固件（firmware）应该去哪里下啊？？</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-initramfs-lib-modules-6-10-0-kernel">在执行<code class="docutils literal notranslate"><span class="pre">update-initramfs</span></code>命令过程中提示找不到<code class="docutils literal notranslate"><span class="pre">/lib/modules/6.10.0/kernel</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">参考</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="qemu-firmware">
+<h1>在QEMU中加载自定义固件（firmware）失败<a class="headerlink" href="#qemu-firmware" title="Permalink to this heading">#</a></h1>
+<section id="id1">
+<h2>问题描述<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<p>在我们使用Qemu运行Linux时，Linux内核启动阶段可能会有设备需要加载固件（firmware），但是加载固件会报出错误，提示找不到对应的固件程序。以amdgpu加载kaveri设备为例，在加载的过程中，linux内核日志如下：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>    <span class="mf">1.970638</span><span class="p">]</span> <span class="p">[</span><span class="n">drm</span><span class="p">:</span><span class="n">cik_sdma_early_init</span><span class="p">]</span> 
+<span class="p">[</span>    <span class="mf">1.971289</span><span class="p">]</span> <span class="n">amdgpu</span> <span class="mi">0000</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mf">04.0</span><span class="p">:</span> <span class="n">Direct</span> <span class="n">firmware</span> <span class="n">load</span> <span class="k">for</span> <span class="n">amdgpu</span><span class="o">/</span><span class="n">kaveri_sdma</span><span class="o">.</span><span class="n">bin</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">error</span> <span class="o">-</span><span class="mi">2</span>
+<span class="p">[</span>    <span class="mf">1.972421</span><span class="p">]</span> <span class="n">amdgpu</span><span class="p">:</span> <span class="n">cik_sdma</span><span class="p">:</span> <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span> <span class="n">firmware</span> <span class="s2">&quot;amdgpu/kaveri_sdma.bin&quot;</span>
+<span class="p">[</span>    <span class="mf">1.973281</span><span class="p">]</span> <span class="p">[</span><span class="n">drm</span><span class="p">:</span><span class="n">amdgpu_device_init</span><span class="p">]</span> <span class="o">*</span><span class="n">ERROR</span><span class="o">*</span> <span class="n">early_init</span> <span class="n">of</span> <span class="n">IP</span> <span class="n">block</span> <span class="o">&lt;</span><span class="n">cik_sdma</span><span class="o">&gt;</span> <span class="n">failed</span> <span class="o">-</span><span class="mi">19</span>
+</pre></div>
+</div>
+<p>从日志中可以看到，在加载amdgpu/kaveri_sdma.bin时，出现错误，错误码为-2，我们查阅<code class="docutils literal notranslate"><span class="pre">/include/uapi/asm-generic/errno-base.h</span></code>这个文件：</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */</span>
+<span class="cp">#ifndef _ASM_GENERIC_ERRNO_BASE_H</span>
+<span class="cp">#define _ASM_GENERIC_ERRNO_BASE_H</span>
+
+<span class="cp">#define	EPERM		 1	</span><span class="cm">/* Operation not permitted */</span>
+<span class="cp">#define	ENOENT		 2	</span><span class="cm">/* No such file or directory */</span>
+<span class="cp">#define	ESRCH		 3	</span><span class="cm">/* No such process */</span>
+<span class="cp">#define	EINTR		 4	</span><span class="cm">/* Interrupted system call */</span>
+<span class="cp">#define	EIO		     5	</span><span class="cm">/* I/O error */</span>
+<span class="cp">#define	ENXIO		 6	</span><span class="cm">/* No such device or address */</span>
+<span class="cp">#define	E2BIG		 7	</span><span class="cm">/* Argument list too long */</span>
+<span class="cp">#define	ENOEXEC		 8	</span><span class="cm">/* Exec format error */</span>
+<span class="cp">#define	EBADF		 9	</span><span class="cm">/* Bad file number */</span>
+<span class="cp">#define	ECHILD		10	</span><span class="cm">/* No child processes */</span>
+<span class="cp">#define	EAGAIN		11	</span><span class="cm">/* Try again */</span>
+<span class="cp">#define	ENOMEM		12	</span><span class="cm">/* Out of memory */</span>
+<span class="cp">#define	EACCES		13	</span><span class="cm">/* Permission denied */</span>
+<span class="cp">#define	EFAULT		14	</span><span class="cm">/* Bad address */</span>
+<span class="cp">#define	ENOTBLK		15	</span><span class="cm">/* Block device required */</span>
+<span class="cp">#define	EBUSY		16	</span><span class="cm">/* Device or resource busy */</span>
+<span class="cp">#define	EEXIST		17	</span><span class="cm">/* File exists */</span>
+<span class="cp">#define	EXDEV		18	</span><span class="cm">/* Cross-device link */</span>
+<span class="cp">#define	ENODEV		19	</span><span class="cm">/* No such device */</span>
+<span class="cp">#define	ENOTDIR		20	</span><span class="cm">/* Not a directory */</span>
+<span class="cp">#define	EISDIR		21	</span><span class="cm">/* Is a directory */</span>
+<span class="cp">#define	EINVAL		22	</span><span class="cm">/* Invalid argument */</span>
+<span class="cp">#define	ENFILE		23	</span><span class="cm">/* File table overflow */</span>
+<span class="cp">#define	EMFILE		24	</span><span class="cm">/* Too many open files */</span>
+<span class="cp">#define	ENOTTY		25	</span><span class="cm">/* Not a typewriter */</span>
+<span class="cp">#define	ETXTBSY		26	</span><span class="cm">/* Text file busy */</span>
+<span class="cp">#define	EFBIG		27	</span><span class="cm">/* File too large */</span>
+<span class="cp">#define	ENOSPC		28	</span><span class="cm">/* No space left on device */</span>
+<span class="cp">#define	ESPIPE		29	</span><span class="cm">/* Illegal seek */</span>
+<span class="cp">#define	EROFS		30	</span><span class="cm">/* Read-only file system */</span>
+<span class="cp">#define	EMLINK		31	</span><span class="cm">/* Too many links */</span>
+<span class="cp">#define	EPIPE		32	</span><span class="cm">/* Broken pipe */</span>
+<span class="cp">#define	EDOM		33	</span><span class="cm">/* Math argument out of domain of func */</span>
+<span class="cp">#define	ERANGE		34	</span><span class="cm">/* Math result not representable */</span>
+
+<span class="cp">#endif</span>
+</pre></div>
+</div>
+<p>看来问题是<code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">such</span> <span class="pre">file</span> <span class="pre">or</span> <span class="pre">directory</span></code>.我们使用gdb进行调试，在调试过程中，进入了函数<code class="docutils literal notranslate"><span class="pre">_request_firmware</span></code>之后，会讲fw_path和<code class="docutils literal notranslate"><span class="pre">amdgpu/kaveri_sdma.bin</span></code>拼接成<code class="docutils literal notranslate"><span class="pre">path</span></code>，所以，可能就是这里的路径出现错误，导致找不到对应的固件</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>pwndbg&gt; p fw_path
+$9 = {0xffffffff8867fee0 &lt;fw_path_para&gt; &quot;&quot;, 
+  0xffffffff85fefd60 &quot;/lib/firmware/updates/6.10.0&quot;, 
+  0xffffffff85fefda0 &quot;/lib/firmware/updates&quot;, 
+  0xffffffff85fefde0 &quot;/lib/firmware/6.10.0&quot;, 0xffffffff85fefe20 &quot;/lib/firmware&quot;}
+pwndbg&gt; p path
+$11 = 0xffff888101dfc400 &quot;/lib/firmware/updates/6.10.0/amdgpu/kaveri_sdma.bin&quot;
+</pre></div>
+</div>
+<p>但是在guest os中，该固件程序是存在的。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@syzkaller:/lib/firmware/amdgpu# </span>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>kaveri
+<span class="go">kaveri_ce.bin</span>
+<span class="go">kaveri_me.bin</span>
+<span class="go">kaveri_mec.bin</span>
+<span class="go">kaveri_mec2.bin</span>
+<span class="go">kaveri_pfp.bin</span>
+<span class="go">kaveri_rlc.bin</span>
+<span class="go">kaveri_sdma.bin</span>
+<span class="go">kaveri_sdma1.bin</span>
+<span class="go">kaveri_uvd.bin</span>
+<span class="go">kaveri_vce.bin</span>
+</pre></div>
+</div>
+<p>明明guest os中，固件是存在的，但是为什么在<strong>Linux启动阶段</strong>会找不到这个固件呢？</p>
+</section>
+<section id="id2">
+<h2>问题分析<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h2>
+<p>若<code class="docutils literal notranslate"><span class="pre">amdgpu</span></code>驱动以内置形式编译进内核（<code class="docutils literal notranslate"><span class="pre">CONFIG_DRM_AMDGPU=y</span></code>），则固件需直接嵌入内核或通过<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>加载，因为此时根文件系统尚未挂载。反而，如果是以驱动以模块形式加载（<code class="docutils literal notranslate"><span class="pre">CONFIG_DRM_AMDGPU=m</span></code>），则模块加载时根文件系统已挂载。
+在这里，我们将<code class="docutils literal notranslate"><span class="pre">amdgpu</span></code>以内置形式编译进了内核，但是没有在<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>上进行相应的配置，所以会出现这个问题。所以，我们解决问题的要点就是，如何将固件嵌入内核，然后通过<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>加载。</p>
+</section>
+<section id="id3">
+<h2>知识补充<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
+<section id="initramfs">
+<h3>initramfs<a class="headerlink" href="#initramfs" title="Permalink to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">initramfs</span></code>（Initial RAM File System，初始化内存文件系统）是 Linux 启动过程中一个临时的根文件系统，用于在内核加载后、挂载真实根文件系统之前完成必要的初始化操作。它的核心作用是通过提供用户态环境，解决内核依赖外部驱动和工具的“先有鸡还是蛋”问题[1][2]。</p>
+<section id="id4">
+<h4>主要功能与特点：<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h4>
+<ol class="arabic simple">
+<li><p><strong>硬件兼容性支持</strong></p>
+<ul class="simple">
+<li><p>内核自身不包含所有硬件驱动，而真实根文件系统可能存储在不同介质（如加密分区、网络存储或 RAID）上。<code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 包含必要的驱动模块（如存储驱动、文件系统驱动）和工具，确保内核能识别并访问真实根文件系统[1][2]。</p></li>
+</ul>
+</li>
+<li><p><strong>启动流程的关键桥梁</strong></p>
+<ul class="simple">
+<li><p>内核启动后，首先挂载 <code class="docutils literal notranslate"><span class="pre">rootfs</span></code>（本质是 <code class="docutils literal notranslate"><span class="pre">ramfs</span></code>），并将 <code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 解压到其中，形成临时根文件系统。此时内核从内存中的 <code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 加载驱动和工具，而非依赖外部存储设备[1][3]。</p></li>
+</ul>
+</li>
+<li><p><strong>核心组件</strong></p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">/init</span></code> 脚本</strong>：作为 <code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 的入口，负责初始化虚拟文件系统（如挂载 <code class="docutils literal notranslate"><span class="pre">/proc</span></code>、<code class="docutils literal notranslate"><span class="pre">/sys</span></code>）、加载驱动模块、解密分区（如 LUKS）、激活逻辑卷（LVM）等[2][3]。</p></li>
+<li><p><strong>必要工具与库</strong>：包含 <code class="docutils literal notranslate"><span class="pre">mount</span></code>、<code class="docutils literal notranslate"><span class="pre">modprobe</span></code> 等命令及依赖的动态库（如 <code class="docutils literal notranslate"><span class="pre">libc.so</span></code>），支持用户态操作[2][3]。</p></li>
+<li><p><strong>设备节点</strong>：通过 <code class="docutils literal notranslate"><span class="pre">/dev</span></code> 目录提供硬件访问接口[1]。</p></li>
+</ul>
+</li>
+<li><p><strong>与 <code class="docutils literal notranslate"><span class="pre">initrd</span></code> 的差异</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">initrd</span></code>（旧机制）基于块设备，需固定大小且需文件系统驱动，效率较低；<code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 基于 <code class="docutils literal notranslate"><span class="pre">ramfs</span></code>，动态调整大小，直接利用内存缓存机制，无需块设备仿真，更高效灵活[1][3]。</p></li>
+</ul>
+</li>
+<li><p><strong>与实际根文件系统的关系</strong></p>
+<ul class="simple">
+<li><p>initramfs 是启动过程中加载的临时根文件系统，用于执行一些初始化任务，例如检测和加载必要的驱动程序、挂载设备和配置网络等。在完成初始化任务并确保最终的根文件系统可用后，initramfs 会通过 pivot_root 或 switch_root 交出控制权，切换到真正的根文件系统。切换后，initramfs 通常会被释放或卸载，由真正的根文件系统上的 init 进程继续启动后续的系统服务和应用程序。</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="id5">
+<h4><code class="docutils literal notranslate"><span class="pre">initramfs</span></code>结构<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">initramfs</span></code>是一个临时的根文件系统，包含了跟文件系统中常见的基本组件，在Linux初始化阶段会有用到。其中包括了<code class="docutils literal notranslate"><span class="pre">/bin</span></code>、<code class="docutils literal notranslate"><span class="pre">/dev</span></code>、<code class="docutils literal notranslate"><span class="pre">/etc</span></code>、<code class="docutils literal notranslate"><span class="pre">/lib</span></code>、<code class="docutils literal notranslate"><span class="pre">/sbin</span></code>、<code class="docutils literal notranslate"><span class="pre">/proc</span></code>、<code class="docutils literal notranslate"><span class="pre">/sys</span></code>、<code class="docutils literal notranslate"><span class="pre">/init</span></code>等。其中值得注意的是，<code class="docutils literal notranslate"><span class="pre">/init</span></code>目录中存储的是<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>的主启动脚本，在启动过程中，内核会执行该脚本，该脚本会创建整个<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>，包括加载驱动程序、挂在文件系统、复制固件等。等Linux内核初始化完成之后，再通过<code class="docutils literal notranslate"><span class="pre">pivot_root</span></code>或<code class="docutils literal notranslate"><span class="pre">switch_root</span></code>将控制权移交给根文件系统上的<code class="docutils literal notranslate"><span class="pre">init</span></code>进程。</p>
+</section>
+<section id="id6">
+<h4>工作流程：<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h4>
+<ol class="arabic simple">
+<li><p><strong>内核加载</strong>
+Bootloader（如 GRUB）将内核和 <code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 加载到内存，传递参数（如 <code class="docutils literal notranslate"><span class="pre">root=/dev/sda1</span></code>）[2][3]。</p></li>
+<li><p><strong>挂载临时根文件系统</strong>
+内核解压 <code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 到 <code class="docutils literal notranslate"><span class="pre">rootfs</span></code>，形成临时根环境，并执行 <code class="docutils literal notranslate"><span class="pre">/init</span></code> 脚本[1][2]。</p></li>
+<li><p><strong>初始化操作</strong></p>
+<ul class="simple">
+<li><p>挂载虚拟文件系统（<code class="docutils literal notranslate"><span class="pre">/proc</span></code>、<code class="docutils literal notranslate"><span class="pre">/sys</span></code>、<code class="docutils literal notranslate"><span class="pre">/dev</span></code>）。</p></li>
+<li><p>加载存储驱动、解密分区、激活逻辑卷。</p></li>
+<li><p>挂载真实根文件系统到临时目录（如 <code class="docutils literal notranslate"><span class="pre">/mnt/root</span></code>）[2][3]。</p></li>
+</ul>
+</li>
+<li><p><strong>切换至真实根文件系统</strong>
+通过 <code class="docutils literal notranslate"><span class="pre">switch_root</span></code> 或 <code class="docutils literal notranslate"><span class="pre">pivot_root</span></code> 将控制权移交真实根文件系统，释放 <code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 内存[1][2]。</p></li>
+</ol>
+</section>
+<section id="id7">
+<h4>应用场景示例：<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>加密根分区</strong>：通过 <code class="docutils literal notranslate"><span class="pre">cryptsetup</span></code> 解密 LUKS 分区后挂载[2]。</p></li>
+<li><p><strong>逻辑卷管理（LVM）</strong>：激活卷组并挂载逻辑卷[2]。</p></li>
+<li><p><strong>网络根文件系统（NFS）</strong>：配置网络后挂载远程存储[1]。</p></li>
+</ul>
+</section>
+<section id="id8">
+<h4>生成与定制：<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>工具支持</strong>：使用 <code class="docutils literal notranslate"><span class="pre">dracut</span></code>（Fedora/RHEL）、<code class="docutils literal notranslate"><span class="pre">mkinitcpio</span></code>（Arch Linux）、<code class="docutils literal notranslate"><span class="pre">update-initramfs</span></code>（Debian/Ubuntu）自动生成[2]。</p></li>
+<li><p><strong>手动构建</strong>：可通过 <code class="docutils literal notranslate"><span class="pre">busybox</span></code> 创建精简环境，打包为 CPIO 格式并压缩[3]。</p></li>
+</ul>
+<p>总结：<code class="docutils literal notranslate"><span class="pre">initramfs</span></code> 是 Linux 启动过程中不可或缺的过渡机制，通过提供临时的用户态环境，确保内核能灵活应对多样化的硬件和存储配置，最终挂载真实根文件系统并完成系统初始化[1][2][3]。</p>
+<blockquote>
+<div><p>参考：</p>
+<p>[1]: <a class="reference external" href="https://blog.csdn.net/fuhanghang/article/details/128849560">https://blog.csdn.net/fuhanghang/article/details/128849560</a></p>
+<p>[2]: <a class="reference external" href="https://blog.csdn.net/weixin_47763623/article/details/143484352">https://blog.csdn.net/weixin_47763623/article/details/143484352</a></p>
+<p>[3]: <a class="reference external" href="https://www.cnblogs.com/wipan/p/9269505.html">https://www.cnblogs.com/wipan/p/9269505.html</a></p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="id9">
+<h2>解决方法<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h2>
+<p>我们以<code class="docutils literal notranslate"><span class="pre">Debian/Ubuntu</span></code>发行版为例来解决该问题，其余的发行版自己再去查一下资料吧hhh。如上介绍可知，我们只需要在<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>初始化阶段，将amdgpu的固件加载进去就可以。
+在<code class="docutils literal notranslate"><span class="pre">Debian/Ubuntu</span></code>中，我们可以通过向目录<code class="docutils literal notranslate"><span class="pre">/etc/initramfs-tools/hooks/</span></code>中添加脚本，将<code class="docutils literal notranslate"><span class="pre">amdgpu/kaveri_sdma.bin</span></code>复制到<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>中就可以了。</p>
+<p>首先我们先安装一下依赖</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo apt install initramfs-tools</span>
+</pre></div>
+</div>
+<p>具体来说，我们在<code class="docutils literal notranslate"><span class="pre">/etc/initramfs-tools/hooks/</span></code>中创建脚本<code class="docutils literal notranslate"><span class="pre">amdgpu-firmware</span></code>，然后输入以下脚本代码：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DESTDIR</span><span class="si">}</span><span class="s2">/lib/firmware/&quot;</span>
+cp<span class="w"> </span>-r<span class="w"> </span>/lib/firmware/amdgpu<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DESTDIR</span><span class="si">}</span><span class="s2">/lib/firmware/&quot;</span>
+</pre></div>
+</div>
+<p>然后为该脚本赋予执行权限，并且更新<code class="docutils literal notranslate"><span class="pre">initramfs</span></code>即可</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">chmod +x /etc/initramfs-tools/hooks/amdgpu-firmware</span>
+<span class="go">update-initramfs -u -k $(uname -r)</span>
+</pre></div>
+</div>
+<p>执行了以上代码之后，我们可以看到终端中出现了以下输出：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@guestos:/etc/initramfs-tools/hooks# </span>update-initramfs<span class="w"> </span>-u<span class="w"> </span>-k<span class="w"> </span><span class="k">$(</span>uname<span class="w"> </span>-r<span class="k">)</span>
+<span class="go">update-initramfs: Generating /boot/initrd.img-6.10.0</span>
+<span class="go">W: Kernel configuration /boot/config-6.10.0 is missing, cannot check for zstd compression support (CONFIG_RD_ZSTD)</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/ip_discovery.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/vega10_cap.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/sienna_cichlid_cap.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/navi12_cap.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/aldebaran_cap.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/gc_11_0_0_toc.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/sienna_cichlid_mes1.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/sienna_cichlid_mes.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/navi10_mes.bin for built-in driver amdgpu</span>
+<span class="go">W: Possible missing firmware /lib/firmware/amdgpu/gc_11_0_3_mes.bin for built-in driver amdgpu</span>
+</pre></div>
+</div>
+<p>此时应该就可以了，我们可以使用以下命令查看一下结果：</p>
+<p>检查文件initrd.img-xxx是否存在</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ls -l /boot/initrd.img-$(uname -r)</span>
+</pre></div>
+</div>
+<p>检查内容是否正确</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># 先安装一个依赖
+sudo apt install lz4
+# 然后检查内容
+lsinitramfs /boot/initrd.img-$(uname -r) | grep amdgpu/kaveri_sdma.bin
+</pre></div>
+</div>
+<p>可以得到如下执行结果：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@guestos:/etc/initramfs-tools/hooks# </span>lsinitramfs<span class="w"> </span>/boot/initrd.img-<span class="k">$(</span>uname<span class="w"> </span>-r<span class="k">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>amdgpu/kaveri_sdma.bin
+<span class="go">usr/lib/firmware/amdgpu/kaveri_sdma.bin</span>
+</pre></div>
+</div>
+<p>虽然我们看到的路径是<code class="docutils literal notranslate"><span class="pre">usr/lib/firmware/amdgpu/kaveri_sdma.bin</span></code>而非<code class="docutils literal notranslate"><span class="pre">/lib/firmware/amdgpu/kaveri_sdma.bin</span></code>，案例来说这没有关系，因为/lib本就是链接到/usr/lib的</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">lrwxrwxrwx   1 root   root          7  4月 22  2024 lib -&gt; usr/lib</span>
+</pre></div>
+</div>
+<p>但是，我重新启动了linux内核，发现问题还是没有解决。那么让我们来重新自己看一下代码，</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* direct firmware loading support */</span>
+<span class="k">static</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">fw_path_para</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+<span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">fw_path</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">	</span><span class="n">fw_path_para</span><span class="p">,</span>
+<span class="w">	</span><span class="s">&quot;/lib/firmware/updates/&quot;</span><span class="w"> </span><span class="n">UTS_RELEASE</span><span class="p">,</span>
+<span class="w">	</span><span class="s">&quot;/lib/firmware/updates&quot;</span><span class="p">,</span>
+<span class="w">	</span><span class="s">&quot;/lib/firmware/&quot;</span><span class="w"> </span><span class="n">UTS_RELEASE</span><span class="p">,</span>
+<span class="w">	</span><span class="s">&quot;/lib/firmware&quot;</span>
+<span class="p">};</span>
+
+<span class="cm">/*</span>
+<span class="cm"> * Typical usage is that passing &#39;firmware_class.path=$CUSTOMIZED_PATH&#39;</span>
+<span class="cm"> * from kernel command line because firmware_class is generally built in</span>
+<span class="cm"> * kernel instead of module.</span>
+<span class="cm"> */</span>
+<span class="n">module_param_string</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">fw_path_para</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">fw_path_para</span><span class="p">),</span><span class="w"> </span><span class="mo">0644</span><span class="p">);</span>
+<span class="n">MODULE_PARM_DESC</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;customized firmware image search path with a higher priority than default path&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Linux内核会默认从这几个地方获取firmware，那么我们是不是可以通过指定这个内核模块参数来指定我们想要的fw_path_para。因此我们在qemu启动命令行参数的<code class="docutils literal notranslate"><span class="pre">-append</span></code>中加入<code class="docutils literal notranslate"><span class="pre">firmware_class.path=/usr/lib/firmware</span></code>，让Linux内核从这个地方找固件。现在让我们重新启动qemu，虽然path已经成功改成我们想要的样子了，但是似乎还是没有用…</p>
+<p><img alt="" src="../../../_images/13.png" /></p>
+<p>所以上，可以排除是路径的问题，我猜测，可能还是系统没有使用我们新的根文件系统。</p>
+<p>我在吃火锅的时候突然想到，之前qemu中好像有一个<code class="docutils literal notranslate"><span class="pre">initrd</span></code>的命令行参数，当时用不到就没有太注意，不过算是在脑子里留下了印象。所以，我从Guest OS中将<code class="docutils literal notranslate"><span class="pre">/boot/initrd.img-6.10.0</span></code>复制出来，然后在qemu中添加一个新的命令行参数</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">initrd</span> <span class="o">./</span><span class="n">share</span><span class="o">/</span><span class="n">initrd</span><span class="o">/</span><span class="n">initrd</span><span class="o">.</span><span class="n">img</span><span class="o">-</span><span class="mf">6.10.0</span>
+</pre></div>
+</div>
+<p>然后重启linux内核，成啦！从以下图中就可以看到，，已经成功加载了</p>
+<p><img alt="" src="../../../_images/21.png" /></p>
+</section>
+<section id="id10">
+<h2>补充<a class="headerlink" href="#id10" title="Permalink to this heading">#</a></h2>
+<section id="linux-firmware">
+<h3>Linux中设备固件（firmware）应该去哪里下啊？？<a class="headerlink" href="#linux-firmware" title="Permalink to this heading">#</a></h3>
+<p>如果之前没有下载linux的固件，并且不知道应该去哪里下载，可以访问这个链接：<a class="gitlab reference external" href="https://gitlab.com/kernel-firmware/linux-firmware">kernel-firmware/linux-firmware</a> ，这个仓库包含所有从旧驱动程序中提取的固件镜像，以及从未被允许包含在 GPL 工作中的各种新固件镜像，但已被允许在单独的许可下重新分发。</p>
+</section>
+<section id="update-initramfs-lib-modules-6-10-0-kernel">
+<h3>在执行<code class="docutils literal notranslate"><span class="pre">update-initramfs</span></code>命令过程中提示找不到<code class="docutils literal notranslate"><span class="pre">/lib/modules/6.10.0/kernel</span></code><a class="headerlink" href="#update-initramfs-lib-modules-6-10-0-kernel" title="Permalink to this heading">#</a></h3>
+<p>如果遇到这个问题，应该就是因为内核模块不存在，此时我们需要下载或编译安装linux内核模块</p>
+<p>如果你是使用Ubuntu发行版，那么可以先尝试使用<code class="docutils literal notranslate"><span class="pre">apt</span> <span class="pre">search</span></code>命令搜索是否有对应版本的<code class="docutils literal notranslate"><span class="pre">linux-headers</span></code>和<code class="docutils literal notranslate"><span class="pre">linux-modules</span></code>。你的系统内核的具体版本可以使用<code class="docutils literal notranslate"><span class="pre">uname</span> <span class="pre">-r</span></code>来查看。例如，以<code class="docutils literal notranslate"><span class="pre">6.11.0</span></code>为例，我们就可以找到对应的<code class="docutils literal notranslate"><span class="pre">linux-headers</span></code>如下：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">linux</span><span class="o">-</span><span class="n">headers</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">17</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">17.17</span><span class="o">~</span><span class="mf">24.04.2</span> <span class="n">amd64</span>
+<span class="n">linux</span><span class="o">-</span><span class="n">headers</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">19</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">19.19</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+<span class="n">linux</span><span class="o">-</span><span class="n">headers</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">21</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">21.21</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+<span class="n">linux</span><span class="o">-</span><span class="n">headers</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">24</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">24.24</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+<span class="n">linux</span><span class="o">-</span><span class="n">headers</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">25</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">25.25</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+</pre></div>
+</div>
+<p>再次用<code class="docutils literal notranslate"><span class="pre">apt</span> <span class="pre">search</span></code>搜索<code class="docutils literal notranslate"><span class="pre">linux-modules</span></code>，可以看到结果：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">linux</span><span class="o">-</span><span class="n">modules</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">17</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">17.17</span><span class="o">~</span><span class="mf">24.04.2</span> <span class="n">amd64</span>       
+<span class="n">linux</span><span class="o">-</span><span class="n">modules</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">19</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">19.19</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+<span class="n">linux</span><span class="o">-</span><span class="n">modules</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">21</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">21.21</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+<span class="n">linux</span><span class="o">-</span><span class="n">modules</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">24</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">24.24</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+<span class="n">linux</span><span class="o">-</span><span class="n">modules</span><span class="o">-</span><span class="mf">6.11.0</span><span class="o">-</span><span class="mi">25</span><span class="o">-</span><span class="n">generic</span><span class="o">/</span><span class="n">noble</span><span class="o">-</span><span class="n">updates</span><span class="p">,</span><span class="n">noble</span><span class="o">-</span><span class="n">security</span> <span class="mf">6.11.0</span><span class="o">-</span><span class="mf">25.25</span><span class="o">~</span><span class="mf">24.04.1</span> <span class="n">amd64</span>
+</pre></div>
+</div>
+<p>我们选择一个合适的版本安装即可。</p>
+<p>但大多数情况下，我们是无法在apt上搜索到与本地的内核版本对应的安装包的，因此我们需要自己的编译构建。这里没有什么太好的办法，只能编译安装。</p>
+<p>具体来说，我们在启动Guest OS时，往往会自己编译出一个内核并启动，我的一个很蠢的做法就是，将编译这个内核的源码，通过qemu的共享目录，一整个拷贝到Guest OS中，然后在Guest OS中编译可能用到的内核模块，然后使用<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">modules_install</span></code>安装这些模块，通过这个方式，我们就可以在Guest OS中安装内核版本对应的内核模块。</p>
+</section>
+</section>
+<section id="id11">
+<h2>参考<a class="headerlink" href="#id11" title="Permalink to this heading">#</a></h2>
+<blockquote>
+<div><p><a class="reference external" href="https://blog.csdn.net/weixin_47763623/article/details/143484352">https://blog.csdn.net/weixin_47763623/article/details/143484352</a></p>
+<p><a class="reference external" href="https://blog.csdn.net/fuhanghang/article/details/128849560">https://blog.csdn.net/fuhanghang/article/details/128849560</a></p>
+<p><a class="reference external" href="https://manpages.debian.org/testing/initramfs-tools/update-initramfs.8.en.html">https://manpages.debian.org/testing/initramfs-tools/update-initramfs.8.en.html</a></p>
+</div></blockquote>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../3-run-macos-on-kvm/3-run-macos-on-kvm.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">如何使用QEMU/KVM运行MacOS</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../../paper/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Paper</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">问题描述</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">问题分析</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">知识补充</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#initramfs">initramfs</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">主要功能与特点：</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">initramfs</span></code>结构</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">工作流程：</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">应用场景示例：</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">生成与定制：</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">解决方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">补充</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linux-firmware">Linux中设备固件（firmware）应该去哪里下啊？？</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-initramfs-lib-modules-6-10-0-kernel">在执行<code class="docutils literal notranslate"><span class="pre">update-initramfs</span></code>命令过程中提示找不到<code class="docutils literal notranslate"><span class="pre">/lib/modules/6.10.0/kernel</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">参考</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Killuayz
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

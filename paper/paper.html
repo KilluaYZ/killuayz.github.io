@@ -1,0 +1,768 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Papers About Kernel Fuzzing &#8212; Kernel Fuzzing Tutorial  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'paper/paper';</script>
+    <link rel="canonical" href="https://nix.dev/paper/paper.html" />
+    <link rel="shortcut icon" href="../_static/favicon.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Nix" href="../nix/index.html" />
+    <link rel="prev" title="Paper" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><div class="logo">
+  <a href="/">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <img src="/_static/img/linux.svg" alt="">
+      <span>Kernel Fuzzing</span>
+      <span>V0.11.0</span>
+    </div>
+  </a>
+</div>
+
+<iframe
+  src="https://ghbtns.com/github-btn.html?user=Killuayz&repo=Kernel-Fuzzing-Tutorial&type=star&count=true&size=large"
+  frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+
+<p>Notes about Kernel Fuzzing</p></div>
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../kernel/index.html">Kernel</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../kernel/linux/index.html">Linux Kernel</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../kernel/linux/tutorial/index.html">Linux Kernel Tutorial</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/compile_run/compile_run.html">Linux 内核的编译与运行</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/build_image/build_image.html">如何制作简单的Linux系统镜像</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/debug/debug_kernel.html">Linux内核调试</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/simple_driver/simple_driver.html">简单的驱动程序：VirtualDisk字符设备驱动</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/load_module/linux_kernel_load_module.html">如何让Linux内核编译驱动模块并且加载驱动模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/udev/udev.html">Linux的设备管理器——udev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/sysfs/sysfs.html">Sysfs介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/ebpf/ebpf.html">eBPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/ioctl/ioctl.html">系统调用ioctl介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/device_driver_arch/device_driver_arch.html">Linux设备驱动框架</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/xarray/xarray.html">基础数据结构介绍——XArray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/tutorial/globalmem_driver/globalmem_driver.html">globalmem 虚拟设备</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../kernel/linux/bugs/index.html">Linux Kernel Bugs</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/bugs/cve/CVE-2024-50274/CVE-2024-50274.html">CVE-2024-50274</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/bugs/cve/CVE-2024-43894/CVE-2024-43894.html">CVE-2024-43894</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/bugs/syzbot/gpf_drm_crtc_next_vblank_start/gpf_drm_crtc_next_vblank_start.html">general protection fault in drm_crtc_next_vblank_start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/bugs/syzbot/uaf_netdev_unregister_kobject/uaf_netdev_unregister_kobject.html">KASAN: use-after-free Read in netdev_unregister_kobject</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/bugs/syzbot/npd_read_ida_free/npd_read_ida_free.html">KASAN: null-ptr-deref Read in ida_free (4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../kernel/linux/bugs/syzbot/gpf_hci_abort_conn/gpf_hci_abort_conn.html">general protection fault in hci_abort_conn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../fuzzer/index.html">Fuzzer</a><input checked class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../fuzzer/syzkaller/index.html">SyzKaller</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../fuzzer/syzkaller/0-introduction/0-introduction.html">Syzkaller 介绍</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../simulator/index.html">Simulator</a><input checked class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../simulator/qemu/index.html">QEMU</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../simulator/qemu/0-how-to-use-kvm/0-how-to-use-kvm.html">如何使用KVM运行系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulator/qemu/1-how-to-share-directory/1-how-to-share-directory.html">如何在HOST和GUEST之间建立共享目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulator/qemu/2-how-to-connect-net/2-how-to-connect-net.html">QEMU中如何配置网络</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.html">如何使用QEMU/KVM运行MacOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html">在QEMU中加载自定义固件（firmware）失败</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Paper</a><input checked class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Papers About Kernel Fuzzing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../nix/index.html">Nix</a><input checked class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../nix/install-nix.html">Install Nix</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../nix/tutorials/index.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../nix/tutorials/first-steps/index.html">First steps</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/first-steps/ad-hoc-shell-environments.html">Ad hoc shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/first-steps/reproducible-scripts.html">Reproducible interpreted scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/first-steps/declarative-shell.html">Declarative shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs.html">Towards reproducibility: pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/tutorials/nix-language.html">Nix language basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/tutorials/packaging-existing-software.html">Packaging existing software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/tutorials/callpackage.html">Package parameters and overrides with <code class="docutils literal notranslate"><span class="pre">callPackage</span></code></a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../nix/tutorials/working-with-local-files.html">Working with local files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/tutorials/cross-compilation.html">Cross compilation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../nix/tutorials/module-system/index.html">Module system</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/module-system/a-basic-module/index.html">1. A basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/module-system/deep-dive.html">2. Module system deep dive</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../nix/tutorials/nixos/index.html">NixOS</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/nixos-configuration-on-vm.html">NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/building-bootable-iso-image.html">Building a bootable ISO image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/building-and-running-docker-images.html">Building and running Docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/integration-testing-using-virtual-machines.html">Integration testing with NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/provisioning-remote-machines.html">Provisioning remote machines via SSH</a></li>
+
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/installing-nixos-on-a-raspberry-pi.html">Installing NixOS on a Raspberry Pi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/deploying-nixos-using-terraform.html">Deploying NixOS using Terraform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/binary-cache-setup.html">Setting up an HTTP binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/tutorials/nixos/distributed-builds-setup.html">Setting up distributed builds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../nix/guides/index.html">Guides</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../nix/guides/recipes/index.html">Recipes</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../nix/guides/recipes/add-binary-cache.html">Configure Nix to use a custom binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/guides/recipes/direnv.html">Automatic environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/guides/recipes/sharing-dependencies.html">Dependencies in the development shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/guides/recipes/dependency-management.html">Managing remote sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/guides/recipes/python-environment.html">Python development environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/guides/recipes/post-build-hook.html">Setting up post-build hooks</a></li>
+
+
+
+
+
+
+<li class="toctree-l4"><a class="reference internal" href="../nix/guides/recipes/continuous-integration-github-actions.html">Continuous integration with GitHub Actions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/guides/best-practices.html">Best practices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/guides/troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/guides/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../nix/reference/index.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../nix/reference/glossary.html">Glossary</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../nix/reference/nix-manual.html">Nix reference manual</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/development/">Nix pre-release (development)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/latest/">Nix @nix-latest@ (latest)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/rolling/">Nix @nix-rolling@ (in Nixpkgs rolling)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/stable/">Nix @nix-stable@ (in Nixpkgs @nixpkgs-stable@)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/prev-stable/">Nix @nix-prev-stable@ (in Nixpkgs @nixpkgs-prev-stable@)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixpkgs/stable/">Nixpkgs manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixos/stable/">NixOS manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/">Community projects</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/awesome-nix">Support tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/recommended-reading.html">Further reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/reference/pinning-nixpkgs.html">Pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../nix/concepts/index.html">Concepts</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../nix/concepts/flakes.html">Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/concepts/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../nix/flakes/index.html">Flakes</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../nix/flakes/flake_intro.html">Introduction to Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/flakes/flake_getting_start.html">Getting Start</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../nix/contributing/index.html">Contributing</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../nix/contributing/how-to-contribute.html">How to contribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nix/contributing/how-to-get-help.html">How to get help</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../nix/contributing/documentation/index.html">Contributing documentation</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../nix/contributing/documentation/resources.html">Documentation resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/contributing/documentation/diataxis.html">Documentation framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/contributing/documentation/style-guide.html">Style guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nix/contributing/documentation/writing-a-tutorial.html">How to write a tutorial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../nix/acknowledgments/index.html">Acknowledgements</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../nix/acknowledgments/sponsors.html">Sponsors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../wiki/index.html">Wiki</a><input checked class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/0-drm/drm.html">DRM介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/1-nix_with_glibc_compile_error/nix_with_glibc_compile_error.html">Nix打包项目时遇到Cannot find stdlib.h</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/2-nix_golang_get_proxy_connection_refused/nix_golang_get_proxy_connection_refused.html">使用Nix打包Golang项目时报出错误<code class="docutils literal notranslate"><span class="pre">Connection</span> <span class="pre">Refused</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/3-perf_event_open/perf_event_open.html">perf_event_open 函数介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/4-compile_v4.x_undefined_ilog2_NaN/compile_v4.x_undefined_ilog2_NaN.html">在编译linux内核v4.x错误undefined reference to `____ilog2_NaN’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/5-compile_linux_modules/compile_linux_modules.html">如何编译Linux的全部模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/6-specific_keyring_file_not_found/specific_keyring_file_not_found.html">编译时遇到specified keyring file xxx not found</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/7-cannot_insert_hardware_breakpoint/cannot_insert_hardware_breakpoint.html">Cannot insert hardware breakpoint 11:Remote failure reply: 22.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wiki/8-employ-own-overleaf/employ_own_overleaf.html">部署自己的Overleaf</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial/issues/new?title=Issue%20on%20page%20%2Fpaper/paper.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/paper/paper.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Papers About Kernel Fuzzing</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-19-razzer-finding-kernel-race-bugs-through-fuzzing">[S&amp;P’19] Razzer: Finding Kernel Race Bugs through Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-20-agamotto-accelerating-kernel-driver-fuzzing-with-lightweight-virtual-machine-checkpoints">[USENIX’20] Agamotto: Accelerating Kernel Driver Fuzzing with Lightweight Virtual Machine Checkpoints</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-20-krace-data-race-fuzzing-for-kernel-file-systems">[S&amp;P’20] Krace: Data Race Fuzzing for Kernel File Systems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ndss-20-hfl-hybrid-fuzzing-on-the-linux-kernel">[NDSS’20] HFL: Hybrid Fuzzing on the Linux Kernel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-21-windows-ntfuzz-enabling-type-aware-kernel-fuzzing-on-windows-with-static-binary-analysis">[S&amp;P’21] [Windows] NtFuzz: Enabling Type-Aware Kernel Fuzzing on Windows with Static Binary Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-21-syzvegas-beating-kernel-fuzzing-odds-with-reinforcement-learning">[USENIX’21] SyzVegas: Beating Kernel Fuzzing Odds with Reinforcement Learning</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-22-syzscope-revealing-high-risk-security-impacts-of-fuzzer-exposed-bugs-in-linux-kernel">[USENIX’22] SyzScope: Revealing High-Risk Security Impacts of Fuzzer-Exposed Bugs in Linux kernel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-23-segfuzz-segmentizing-thread-interleaving-to-discover-kernel-concurrency-bugs-through-fuzzing">[S&amp;P’23] SegFuzz: Segmentizing Thread Interleaving to Discover Kernel Concurrency Bugs through Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ccs-23-syzdirect-directed-greybox-fuzzing-for-linux-kernel">[CCS’23] SyzDirect: Directed Greybox Fuzzing for Linux Kernel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-23-bokasan-binary-only-kernel-address-sanitizer-for-effective-kernel-fuzzing">[USENIX’23] BoKASAN: Binary-only Kernel Address Sanitizer for Effective Kernel Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-23-actor-action-guided-kernel-fuzzing">[USENIX’23] ACTOR: Action-Guided Kernel Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-23-macos-kextfuzz-fuzzing-macos-kernel-extensions-on-apple-silicon-via-exploiting-mitigations">[USENIX’23] [macOS]KextFuzz: Fuzzing macOS Kernel EXTensions on Apple Silicon via Exploiting Mitigations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ndss-23-no-grammar-no-problem-towards-fuzzing-the-linux-kernel-without-system-call-descriptions">[NDSS’23] No Grammar, No Problem: Towards Fuzzing the Linux Kernel without System-Call Descriptions.</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-24-syzgen-dependency-inference-for-augmenting-kernel-driver-fuzzing">[S&amp;P’24] SyzGen++: Dependency Inference for Augmenting Kernel Driver Fuzzing</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="papers-about-kernel-fuzzing">
+<h1>Papers About Kernel Fuzzing<a class="headerlink" href="#papers-about-kernel-fuzzing" title="Permalink to this heading">#</a></h1>
+<p>This repository aims to provide a curated list of research papers focusing on linux kernel fuzzing. Papers without <em>fuzz</em> and <em>kernel</em> keywords in the title may be missed.</p>
+<hr class="docutils" />
+<section id="s-p-19-razzer-finding-kernel-race-bugs-through-fuzzing">
+<h2>[S&amp;P’19] Razzer: Finding Kernel Race Bugs through Fuzzing<a class="headerlink" href="#s-p-19-razzer-finding-kernel-race-bugs-through-fuzzing" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;amp;arnumber=8835326">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+A data race in a kernel is an important class of bugs,  critically impacting the reliability and security of the associated  system.  As a result of a race, the kernel may become unresponsive.  Even worse, an attacker may launch a privilege escalation attack  to acquire root privileges.  In this paper, we propose RAZZER, a tool to find race bugs  in kernels.  The core of RAZZER is in guiding fuzz testing  towards potential data race spots in the kernel.  RAZZER employs  two techniques to find races efficiently: a static analysis and  a deterministic thread interleaving technique.  Using a static  analysis, RAZZER identifies over-approximated potential data  race spots, guiding the fuzzer to search for data races in the  kernel more efficiently.  Using the deterministic thread interleaving technique implemented at the hypervisor, RAZZER tames  the non-deterministic behavior of the kernel such that it can  deterministically trigger a race.  We implemented a prototype of RAZZER and ran the latest Linux kernel (from v4.16-rc3 to v4.18-  rc3) using RAZZER.  As a result, RAZZER discovered 30 new races  in the kernel, with 16 subsequently confirmed and accordingly  patched by kernel developers after they were reported.
+</details>
+</section>
+<section id="usenix-20-agamotto-accelerating-kernel-driver-fuzzing-with-lightweight-virtual-machine-checkpoints">
+<h2>[USENIX’20] Agamotto: Accelerating Kernel Driver Fuzzing with Lightweight Virtual Machine Checkpoints<a class="headerlink" href="#usenix-20-agamotto-accelerating-kernel-driver-fuzzing-with-lightweight-virtual-machine-checkpoints" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.usenix.org/system/files/sec20-song.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Kernel-mode drivers are challenging to analyze for vulnerabilities, yet play a critical role in maintaining the security  of OS kernels. Their wide attack surface, exposed via both  the system call interface and the peripheral interface, is often  found to be the most direct attack vector to compromise an OS  kernel. Researchers therefore have proposed many fuzzing  techniques to find vulnerabilities in kernel drivers. However,  the performance of kernel fuzzers is still lacking, for reasons  such as prolonged execution of kernel code, interference between test inputs, and kernel crashes. This paper proposes lightweight virtual machine checkpointing as a new primitive that enables high-throughput  kernel driver fuzzing. Our key insight is that kernel driver  fuzzers frequently execute similar test cases in a row, and that  their performance can be improved by dynamically creating  multiple checkpoints while executing test cases and skipping  parts of test cases using the created checkpoints. We built a  system, dubbed Agamotto, around the virtual machine checkpointing primitive and evaluated it by fuzzing the peripheral  attack surface of USB and PCI drivers in Linux. The results  are convincing. Agamotto improved the performance of the  state-of-the-art kernel fuzzer, Syzkaller, by 66.6% on average in fuzzing 8 USB drivers, and an AFL-based PCI fuzzer  by 21.6% in fuzzing 4 PCI drivers, without modifying their  underlying input generation algorithm.
+</details>
+</section>
+<section id="s-p-20-krace-data-race-fuzzing-for-kernel-file-systems">
+<h2>[S&amp;P’20] Krace: Data Race Fuzzing for Kernel File Systems<a class="headerlink" href="#s-p-20-krace-data-race-fuzzing-for-kernel-file-systems" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;amp;arnumber=9152693">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Data races occur when two threads fail to use  proper synchronization when accessing shared data.  In kernel file  systems, which are highly concurrent by design, data races are  common mistakes and often wreak havoc on the users, causing  inconsistent states or data losses.  Prior fuzzing practices on file  systems have been effective in uncovering hundreds of bugs, but  they mostly focus on the sequential aspect of file system execution  and do not comprehensively explore the concurrency dimension  and hence, forgo the opportunity to catch data races.  In this paper, we bring coverage-guided fuzzing to the concurrency dimension with three new constructs: 1) a new coverage  tracking metric, alias coverage, specially designed to capture  the exploration progress in the concurrency dimension;  2) an  evolution algorithm for generating, mutating, and merging multithreaded syscall sequences as inputs for concurrency fuzzing;   and 3) a comprehensive lockset and happens-before modeling for  kernel synchronization primitives for precise data race detection.  These components are integrated into KRACE, an end-to-end  fuzzing framework that has discovered 23 data races in ext4,  btrfs, and the VFS layer so far, and 9 are confirmed to be harmful.
+</details>
+</section>
+<section id="ndss-20-hfl-hybrid-fuzzing-on-the-linux-kernel">
+<h2>[NDSS’20] HFL: Hybrid Fuzzing on the Linux Kernel<a class="headerlink" href="#ndss-20-hfl-hybrid-fuzzing-on-the-linux-kernel" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.ndss-symposium.org/wp-content/uploads/2020/02/24018-paper.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Hybrid fuzzing, combining symbolic execution and  fuzzing, is a promising approach for vulnerability discovery  because each approach can complement the other.  However,  we observe that applying hybrid fuzzing to kernel testing is  challenging because the following unique characteristics of the  kernel make a naive adoption of hybrid fuzzing inefficient: 1) having indirect control transfers determined by system call  arguments, 2) controlling and matching internal system state via  system calls, and 3) inferring nested argument type for invoking  system calls.  Failure to handling such challenges will render both  fuzzing and symbolic execution inefficient, and thereby, will result  in an inefficient hybrid fuzzing.  Although these challenges are  essential to both fuzzing and symbolic execution, to the best of  our knowledge, existing kernel testing approaches either naively  use each technique separately without handling such challenges  or imprecisely handle a part of challenges only by static analysis.  To this end, this paper proposes HFL, which not only  combines fuzzing with symbolic execution for hybrid fuzzing  but also addresses kernel-specific fuzzing challenges via three  distinct features: 1) converting indirect control transfers to direct  transfers, 2) inferring system call sequence to build a consistent  system state, and 3) identifying nested arguments types of system  calls.  As a result, HFL found 24 previously unknown vulnerabilities in recent Linux kernels.  Additionally, HFL achieves 15%  and 26% higher code coverage than Moonshine and Syzkaller,  respectively, and over kAFL/S2E/TriforceAFL, achieving even  four times better coverage, using the same amount of resources (CPU, time, etc.).  Regarding vulnerability discovery performance, HFL found 13 known vulnerabilities more than three times faster  than Syzkaller.
+</details>
+</section>
+<section id="s-p-21-windows-ntfuzz-enabling-type-aware-kernel-fuzzing-on-windows-with-static-binary-analysis">
+<h2>[S&amp;P’21] [Windows] NtFuzz: Enabling Type-Aware Kernel Fuzzing on Windows with Static Binary Analysis<a class="headerlink" href="#s-p-21-windows-ntfuzz-enabling-type-aware-kernel-fuzzing-on-windows-with-static-binary-analysis" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;amp;arnumber=9519448">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Although it is common practice for kernel fuzzers to leverage type information of system calls, current Windows kernel fuzzers do not follow the practice as most system calls are private and largely undocumented.  In this paper, we present a practical static binary analyzer that automatically infers system call types on Windows at scale.  We incorporate our analyzer to NtFuzz, a type-aware Windows kernel fuzzing framework.  To our knowledge, this is the first practical fuzzing system that utilizes scalable binary analysis on a COTS OS.  With NtFuzz, we found 11 previously unknown kernel bugs, and earned $25,000 through the bug bounty program offered by Microsoft.  All these results confirm the practicality of our system as a kernel fuzzer.
+</details>
+</section>
+<section id="usenix-21-syzvegas-beating-kernel-fuzzing-odds-with-reinforcement-learning">
+<h2>[USENIX’21] SyzVegas: Beating Kernel Fuzzing Odds with Reinforcement Learning<a class="headerlink" href="#usenix-21-syzvegas-beating-kernel-fuzzing-odds-with-reinforcement-learning" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.usenix.org/system/files/sec21-wang-daimeng.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Fuzzing embeds a large number of decisions requiring finetuned and hard-coded parameters to maximize its efficiency. This is especially true for kernel fuzzing due to (1) OS kernels’ sheer size and complexity, (2) a unique syscall interface  that requires special handling (e.g., encoding explicit dependencies among syscalls), and (3) behaviors of inputs (i.e., test  cases) are often not reproducible due to the stateful nature of OS kernels. Hence, Syzkaller [14], the state-of-art gray-box  kernel fuzzer, incorporates numerous procedures, decision  points, and hard-coded parameters master-crafted by domain  experts. Unfortunately, hard-coded strategies cannot adjust  to factors such as different fuzzing environments/targets and  the dynamically changing potency of tasks and/or seeds, limiting the overall effectiveness of the fuzzer. In this paper,  we propose SYZVEGAS, a fuzzer that dynamically and automatically adapts two of the most critical decision points  in Syzkaller, task selection and seed selection, to remarkably  improve coverage reached per unit-time. SYZVEGAS’s adaptation leverages multi-armed-bandit (MAB) algorithms along  with a novel reward assessment model. Our extensive evaluations of SYZVEGAS on the latest Linux Kernel and its subsystems demonstrate that it (i) finds up to 38.7% more coverage  than the default Syzkaller, (ii) better discovers bugs/crashes (8 more unique crashes) and (iii) has very low 2.1% performance overhead. We reported our findings to Google’s Syzkaller team and are actively working on pushing our  changes upstream.
+</details>
+</section>
+<section id="usenix-22-syzscope-revealing-high-risk-security-impacts-of-fuzzer-exposed-bugs-in-linux-kernel">
+<h2>[USENIX’22] SyzScope: Revealing High-Risk Security Impacts of Fuzzer-Exposed Bugs in Linux kernel<a class="headerlink" href="#usenix-22-syzscope-revealing-high-risk-security-impacts-of-fuzzer-exposed-bugs-in-linux-kernel" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.usenix.org/system/files/sec22-zou.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Fuzzing has become one of the most effective bug finding approach for software. In recent years, 24*7 continuous fuzzing platforms have emerged to test critical  pieces of software, e.g., Linux kernel. Though capable of  discovering many bugs and providing reproducers (e.g.,  proof-of-concepts), a major problem is that they neglect a  critical function that should have been built-in, i.e., evaluation of a bug’s security impact. It is well-known that  the lack of understanding of security impact can lead to  delayed bug fixes as well as patch propagation. In this  paper, we develop SyzScope, a system that can automatically uncover new “high-risk” impacts given a bug  with seemingly “low-risk” impacts. From analyzing over  a thousand low-risk bugs on syzbot, SyzScope successfully determined that 183 low-risk bugs (more than 15%)  in fact contain high-risk impacts, e.g., control flow hijack  and arbitrary memory write, some of which still do not  have patches available yet.
+</details>
+</section>
+<section id="s-p-23-segfuzz-segmentizing-thread-interleaving-to-discover-kernel-concurrency-bugs-through-fuzzing">
+<h2>[S&amp;P’23] SegFuzz: Segmentizing Thread Interleaving to Discover Kernel Concurrency Bugs through Fuzzing<a class="headerlink" href="#s-p-23-segfuzz-segmentizing-thread-interleaving-to-discover-kernel-concurrency-bugs-through-fuzzing" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;amp;arnumber=10179398">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Discovering kernel concurrency bugs through fuzzing is challenging. Identifying kernel concurrency bugs, as opposed to non-concurrency bugs, necessitates an analysis of possible interleavings between two or more threads. However, because the search space of thread interleaving is vast, it is impractical to investigate all conceivable thread interleavings. To explore the vast search space, most previous approaches perform random or simple heuristic searches without having coverage for thread interleaving or with an insufficient form of coverage. As a result, they either conduct wasteful searches with redundant executions or overlook concurrent bugs that their coverage cannot address.To overcome such limitations, we propose SegFuzz, a fuzzing framework for kernel concurrency bugs. When exploring the search space of thread interleavings, SegFuzz decomposes an entire thread interleaving into a set of segments, each of which represents an interleaving of the small number of instructions, and utilizes individual segments as interleaving coverage, called interleaving segment coverage. When searching for thread interleavings, SegFuzz mutates interleavings in explored interleaving segments to construct new thread interleavings that have not yet been explored. With SegFuzz, we discover new 21 concurrency bugs in Linux kernels, and demonstrate the efficiency of SegFuzz by showing that SegFuzz can identify known bugs on average 4.1 times quickly than the state-of-the-art approaches.
+</details>
+</section>
+<section id="ccs-23-syzdirect-directed-greybox-fuzzing-for-linux-kernel">
+<h2>[CCS’23] SyzDirect: Directed Greybox Fuzzing for Linux Kernel<a class="headerlink" href="#ccs-23-syzdirect-directed-greybox-fuzzing-for-linux-kernel" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://dl.acm.org/doi/pdf/10.1145/3576915.3623146">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Bug reports and patch commits are dramatically increasing for OS kernels, incentivizing a critical need for kernel-level bug  reproduction and patch testing.  Directed greybox fuzzing (DGF),  aiming to stress-test a specific part of code, is a promising approach  for bug reproduction and patch testing.  However, the existing DGF methods exclusively target user-space applications, presenting  intrinsic limitations in handling OS kernels.  In particular, these  methods cannot pinpoint the appropriate system calls and the  needed syscall parameter values to reach the target location,  resulting in low efficiency and waste of resources.  In this paper, we present SyzDirect, a DGF solution for the Linux kernel.  With a novel, scalable static analysis of the Linux  kernel, SyzDirect identifies valuable information such as correct  system calls and conditions on their arguments to reach the target  location.  During fuzzing, SyzDirect utilizes the static analysis  results to guide the generation and mutation of test cases, followed  by leveraging distance-based feedback for seed prioritization and  power scheduling.  We evaluated SyzDirect on upstream Linux  kernels for bug reproduction and patch testing.  The results show  that SyzDirect can reproduce 320% more bugs and reach 25.6%  more target patches than generic kernel fuzzers.  It also improves  the speed of bug reproduction and patch reaching by a factor of 154.3 and 680.9, respectively.
+</details>
+</section>
+<section id="usenix-23-bokasan-binary-only-kernel-address-sanitizer-for-effective-kernel-fuzzing">
+<h2>[USENIX’23] BoKASAN: Binary-only Kernel Address Sanitizer for Effective Kernel Fuzzing<a class="headerlink" href="#usenix-23-bokasan-binary-only-kernel-address-sanitizer-for-effective-kernel-fuzzing" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.usenix.org/system/files/usenixsecurity23-cho.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Fuzzing has become one of the most effective bug finding approach for software. In recent years, 24*7 continuous fuzzing platforms have emerged to test critical  pieces of software, e.g., Linux kernel. Though Kernel Address Sanitizer (KASAN), an invaluable tool for  finding use-after-free and out-of-bounds bugs in the Linux  kernel, needs the kernel source for compile-time instrumentation. To apply KASAN to closed-source systems, we should  develop a binary-only KASAN, which is challenging. A technique that uses binary rewriting and processor support to run KASAN for binary modules needs a KASAN-applied kernel, thereby still the kernel source. Dynamic instrumentation  offers an alternative way to it but greatly increases the performance overhead, rendering the kernel fuzzing impractical. To address these problems, we present the first practical,  binary-only KASAN named BoKASAN, which conducts address sanitization through dynamic instrumentation for the  entire kernel binaries efficiently. Our key idea is selective  sanitization, which identifies target processes to sanitize and  hooks the page fault mechanism for significantly reducing the  performance overhead of dynamic instrumentation. Our key  insight is that the kernel bugs are most relevant to the processes created by a fuzzer. Thus, BoKASAN deliberately sanitizes the target memory regions related to these processes and  leaves the remains unsanitized for effective kernel fuzzing. Our evaluation results show that BoKASAN is practical  on closed-source systems, achieving the compiler-level performance of KASAN even on binary-only kernels and modules. Compared to KASAN on the Linux kernel, BoKASAN  detected slightly more bugs in the Janus dataset and slightly  fewer bugs in the Syzkaller/SyzVegas dataset; and BoKASAN  found the same number of unique bugs in the 5-day fuzzing  and executed the similar number of basic blocks. For binary  modules on the Windows kernel and the Linux kernel, resp., BoKASAN was effective in finding bugs. An ablation result  shows that selective sanitization affected these outcomes.
+</details>
+</section>
+<section id="usenix-23-actor-action-guided-kernel-fuzzing">
+<h2>[USENIX’23] ACTOR: Action-Guided Kernel Fuzzing<a class="headerlink" href="#usenix-23-actor-action-guided-kernel-fuzzing" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.usenix.org/system/files/usenixsecurity23-fleischer.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+Fuzzing reliably and efficiently finds bugs in software,  including operating system kernels. In general, higher code  coverage leads to the discovery of more bugs. This is why most  existing kernel fuzzers adopt strategies to generate a series of  inputs that attempt to greedily maximize the amount of code  that they exercise. However, simply executing code may not  be sufficient to reveal bugs that require specific sequences of  actions. Synthesizing inputs to trigger such bugs depends on  two aspects: (i) the actionsthe executed code takes, and (ii) the  order in which those actions are taken. An action is a high-level  operation, such as a heap allocation, that is performed by the  executed code and has a specific semantic meaning. ACTOR, our action-guided kernel fuzzing framework,  deviates from traditional methods. Instead of focusing on  code coverage optimization, our approach generates fuzzer  programs (inputs) that leverage our understanding of triggered  actions and their temporal relationships. Specifically, we  first capture actions that potentially operate on shared data  structures at different times. Then, we synthesize programs  using those actions as building blocks, guided by bug  templates expressed in our domain-specific language. We evaluated ACTOR on four different versions of the Linux  kernel, including two well-tested and frequently updated  long-term (5.4.206, 5.10.131) versions, a stable (5.19), and  the latest (6.2-rc5) release. Our evaluation revealed a total of 41 previously unknown bugs, of which 9 have already been  fixed. Interestingly, 15 (36.59%) of them were discovered in  less than a day.
+</details>
+</section>
+<section id="usenix-23-macos-kextfuzz-fuzzing-macos-kernel-extensions-on-apple-silicon-via-exploiting-mitigations">
+<h2>[USENIX’23] [macOS]KextFuzz: Fuzzing macOS Kernel EXTensions on Apple Silicon via Exploiting Mitigations<a class="headerlink" href="#usenix-23-macos-kextfuzz-fuzzing-macos-kernel-extensions-on-apple-silicon-via-exploiting-mitigations" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.usenix.org/system/files/usenixsecurity23-yin.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+macOS drivers, i.e., Kernel EXTensions (kext), are attractive attack targets for adversaries. However, automatically  discovering vulnerabilities in kexts is extremely challenging  because kexts are mostly closed-source, and the latest macOS  running on customized Apple Silicon has limited tool-chain  support. Most existing static analysis and dynamic testing  solutions cannot be applied to the latest macOS. In this paper,  we present the first smart fuzzing solution KextFuzz to detect  bugs in the latest macOS kexts running on Apple Silicon. Unlike existing driver fuzzing solutions, KextFuzz does not  require source code, execution traces, hypervisors, or hardware features (e.g., coverage tracing) and thus is universal  and practical. We note that macOS has deployed many mitigations, including pointer authentication, code signature, and  userspace kernel layer wrappers, to thwart potential attacks. These mitigations can provide extra knowledge and resources  for us to enable kernel fuzzing. KextFuzz exploits these mitigation schemes to instrument the binary for coverage tracking,  test privileged kext code that is guarded and infrequently accessed, and infer the type and semantic information of the  kext interfaces. KextFuzz has found 48 unique kernel bugs in  the macOS kexts and got five CVEs. Some bugs could cause  severe consequences like non-recoverable denial-of-service  or damages.
+</details>
+</section>
+<section id="ndss-23-no-grammar-no-problem-towards-fuzzing-the-linux-kernel-without-system-call-descriptions">
+<h2>[NDSS’23] No Grammar, No Problem: Towards Fuzzing the Linux Kernel without System-Call Descriptions.<a class="headerlink" href="#ndss-23-no-grammar-no-problem-towards-fuzzing-the-linux-kernel-without-system-call-descriptions" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://www.ndss-symposium.org/wp-content/uploads/2023/02/ndss2023_f688_paper.pdf">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+The integrity of the entire computing ecosystem  depends on the security of our operating systems (OSes).  Unfortunately, due to the scale and complexity of OS code, hundreds  of security issues are found in OSes, every year [32].  As such,  operating systems have constantly been prime use-cases for  applying security-analysis tools.  In recent years, fuzz-testing has  appeared as the dominant technique for automatically finding  security issues in software.  As such, fuzzing has been adapted  to find thousands of bugs in kernels [14].  However, modern OS  fuzzers, such as Syzkaller, rely on precise, extensive, manuallycreated harnesses and grammars for each interface fuzzed within  the kernel.  Due to this reliance on grammars, current OS fuzzers  are faced with scaling-issues.  In this paper, we present FUZZNG, our generic approach to  fuzzing system-calls on OSes.  Unlike Syzkaller, FUZZNG does not  require intricate descriptions of system-call interfaces in order to  function.  Instead FUZZNG leverages fundamental kernel design  features in order to reshape and simplify the fuzzer’s input-space.  As such FUZZNG only requires a small config, for each new  target: essentially a list of files and system-call numbers the fuzzer  should explore.  We implemented FUZZNG for the Linux kernel.  Testing FUZZNG over 10 Linux components with extensive descriptions in Syzkaller showed that, on average, FUZZNG achieves 102.5% of Syzkaller’s coverage.  FUZZNG found 9 new bugs (5 in components that Syzkaller had already fuzzed extensively,  for years).  Additionally, FUZZNG’s lightweight configs are less  than 1.7% the size of Syzkaller’s manually-written grammars. Crucially, FUZZNG achieves this without initial seed-inputs, or  expert guidance.
+</details>
+</section>
+<section id="s-p-24-syzgen-dependency-inference-for-augmenting-kernel-driver-fuzzing">
+<h2>[S&amp;P’24] SyzGen++: Dependency Inference for Augmenting Kernel Driver Fuzzing<a class="headerlink" href="#s-p-24-syzgen-dependency-inference-for-augmenting-kernel-driver-fuzzing" title="Permalink to this heading">#</a></h2>
+<p><a class="reference external" href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;amp;arnumber=10646807">[paper]</a></p>
+<details>
+  <summary>Click to see the abstract!</summary>
+In recent years, kernel fuzzing research has experienced a significant surge. Among various kernel fuzzers, Syzkaller stands out as the state-of-the-art tool, having identified over 5,000 bugs in the Linux kernel. Syzkaller’s success can be attributed to its utilization of manually-curated  syscall specifications provided by kernel experts. However, this  process is time-consuming and not scalable due to complex  input structures and unknown dependencies among syscalls. Consequently, a substantial portion of the kernel codebase,  specifically kernel drivers, lacks specifications, posing a significant security risk. In this paper, we introduce SyzGen++, an innovative  approach for automatically inferring dependencies between  syscalls and generating specifications without relying on existing test suites. Specifically, we define two fundamental building  blocks of insertion and lookup operations and their pairing  to accurately identify dependencies. We evaluated SyzGen++  against existing state-of-the-art techniques on both Linux  and macOS drivers. Our results demonstrate that SyzGen++  uncovered 245 more dependencies. Furthermore, SyzGen++  outperforms DIFUZE, KSG, and SyzDescribe in terms of code  coverage, achieving 71%, 67%, and 39% improvement on  average, respectively. Notably, our evaluation discovered 10  previously unknown bugs in Linux Kernel 6.2 using specifications generated by SyzGen++, resulting in 6 CVEs, which  demonstrates its effectiveness in identifying vulnerabilities.
+</details>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Paper</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../nix/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Nix</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-19-razzer-finding-kernel-race-bugs-through-fuzzing">[S&amp;P’19] Razzer: Finding Kernel Race Bugs through Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-20-agamotto-accelerating-kernel-driver-fuzzing-with-lightweight-virtual-machine-checkpoints">[USENIX’20] Agamotto: Accelerating Kernel Driver Fuzzing with Lightweight Virtual Machine Checkpoints</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-20-krace-data-race-fuzzing-for-kernel-file-systems">[S&amp;P’20] Krace: Data Race Fuzzing for Kernel File Systems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ndss-20-hfl-hybrid-fuzzing-on-the-linux-kernel">[NDSS’20] HFL: Hybrid Fuzzing on the Linux Kernel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-21-windows-ntfuzz-enabling-type-aware-kernel-fuzzing-on-windows-with-static-binary-analysis">[S&amp;P’21] [Windows] NtFuzz: Enabling Type-Aware Kernel Fuzzing on Windows with Static Binary Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-21-syzvegas-beating-kernel-fuzzing-odds-with-reinforcement-learning">[USENIX’21] SyzVegas: Beating Kernel Fuzzing Odds with Reinforcement Learning</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-22-syzscope-revealing-high-risk-security-impacts-of-fuzzer-exposed-bugs-in-linux-kernel">[USENIX’22] SyzScope: Revealing High-Risk Security Impacts of Fuzzer-Exposed Bugs in Linux kernel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-23-segfuzz-segmentizing-thread-interleaving-to-discover-kernel-concurrency-bugs-through-fuzzing">[S&amp;P’23] SegFuzz: Segmentizing Thread Interleaving to Discover Kernel Concurrency Bugs through Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ccs-23-syzdirect-directed-greybox-fuzzing-for-linux-kernel">[CCS’23] SyzDirect: Directed Greybox Fuzzing for Linux Kernel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-23-bokasan-binary-only-kernel-address-sanitizer-for-effective-kernel-fuzzing">[USENIX’23] BoKASAN: Binary-only Kernel Address Sanitizer for Effective Kernel Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-23-actor-action-guided-kernel-fuzzing">[USENIX’23] ACTOR: Action-Guided Kernel Fuzzing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usenix-23-macos-kextfuzz-fuzzing-macos-kernel-extensions-on-apple-silicon-via-exploiting-mitigations">[USENIX’23] [macOS]KextFuzz: Fuzzing macOS Kernel EXTensions on Apple Silicon via Exploiting Mitigations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ndss-23-no-grammar-no-problem-towards-fuzzing-the-linux-kernel-without-system-call-descriptions">[NDSS’23] No Grammar, No Problem: Towards Fuzzing the Linux Kernel without System-Call Descriptions.</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#s-p-24-syzgen-dependency-inference-for-augmenting-kernel-driver-fuzzing">[S&amp;P’24] SyzGen++: Dependency Inference for Augmenting Kernel Driver Fuzzing</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Killuayz
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

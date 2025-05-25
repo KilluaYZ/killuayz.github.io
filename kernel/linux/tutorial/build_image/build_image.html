@@ -1,0 +1,1388 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>如何制作简单的Linux系统镜像 &#8212; Kernel Fuzzing Tutorial  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/clipboard.min.js"></script>
+    <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'kernel/linux/tutorial/build_image/build_image';</script>
+    <link rel="canonical" href="https://nix.dev/kernel/linux/tutorial/build_image/build_image.html" />
+    <link rel="shortcut icon" href="../../../../_static/favicon.png"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="Linux内核调试" href="../debug/debug_kernel.html" />
+    <link rel="prev" title="Linux 内核的编译与运行" href="../compile_run/compile_run.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><div class="logo">
+  <a href="/">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+      <img src="/_static/img/linux.svg" alt="">
+      <span>Kernel Fuzzing</span>
+      <span>V0.11.0</span>
+    </div>
+  </a>
+</div>
+
+<iframe
+  src="https://ghbtns.com/github-btn.html?user=Killuayz&repo=Kernel-Fuzzing-Tutorial&type=star&count=true&size=large"
+  frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+
+<p>Notes about Kernel Fuzzing</p></div>
+        <div class="sidebar-primary-item">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../../index.html">Kernel</a><input checked class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../../index.html">Linux Kernel</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3 current active has-children"><a class="reference internal" href="../index.html">Linux Kernel Tutorial</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../compile_run/compile_run.html">Linux 内核的编译与运行</a></li>
+<li class="toctree-l4 current active"><a class="current reference internal" href="#">如何制作简单的Linux系统镜像</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../debug/debug_kernel.html">Linux内核调试</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../simple_driver/simple_driver.html">简单的驱动程序：VirtualDisk字符设备驱动</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../load_module/linux_kernel_load_module.html">如何让Linux内核编译驱动模块并且加载驱动模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../udev/udev.html">Linux的设备管理器——udev</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sysfs/sysfs.html">Sysfs介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ebpf/ebpf.html">eBPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ioctl/ioctl.html">系统调用ioctl介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../device_driver_arch/device_driver_arch.html">Linux设备驱动框架</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../xarray/xarray.html">基础数据结构介绍——XArray</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../globalmem_driver/globalmem_driver.html">globalmem 虚拟设备</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../bugs/index.html">Linux Kernel Bugs</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/cve/CVE-2024-50274/CVE-2024-50274.html">CVE-2024-50274</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/cve/CVE-2024-43894/CVE-2024-43894.html">CVE-2024-43894</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/gpf_drm_crtc_next_vblank_start/gpf_drm_crtc_next_vblank_start.html">general protection fault in drm_crtc_next_vblank_start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/uaf_netdev_unregister_kobject/uaf_netdev_unregister_kobject.html">KASAN: use-after-free Read in netdev_unregister_kobject</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/npd_read_ida_free/npd_read_ida_free.html">KASAN: null-ptr-deref Read in ida_free (4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../bugs/syzbot/gpf_hci_abort_conn/gpf_hci_abort_conn.html">general protection fault in hci_abort_conn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../fuzzer/index.html">Fuzzer</a><input checked class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../fuzzer/syzkaller/index.html">SyzKaller</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../fuzzer/syzkaller/0-introduction/0-introduction.html">Syzkaller 介绍</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../simulator/index.html">Simulator</a><input checked class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../simulator/qemu/index.html">QEMU</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/0-how-to-use-kvm/0-how-to-use-kvm.html">如何使用KVM运行系统</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/1-how-to-share-directory/1-how-to-share-directory.html">如何在HOST和GUEST之间建立共享目录</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/2-how-to-connect-net/2-how-to-connect-net.html">QEMU中如何配置网络</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/3-run-macos-on-kvm/3-run-macos-on-kvm.html">如何使用QEMU/KVM运行MacOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../simulator/qemu/4-how-to-load-custom-firmware/4-how-to-load-custom-firmware.html">在QEMU中加载自定义固件（firmware）失败</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../paper/index.html">Paper</a><input checked class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../paper/paper.html">Papers About Kernel Fuzzing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../nix/index.html">Nix</a><input checked class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../nix/install-nix.html">Install Nix</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/tutorials/index.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/first-steps/index.html">First steps</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/ad-hoc-shell-environments.html">Ad hoc shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/reproducible-scripts.html">Reproducible interpreted scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/declarative-shell.html">Declarative shell environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs.html">Towards reproducibility: pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/nix-language.html">Nix language basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/packaging-existing-software.html">Packaging existing software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/callpackage.html">Package parameters and overrides with <code class="docutils literal notranslate"><span class="pre">callPackage</span></code></a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/working-with-local-files.html">Working with local files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/tutorials/cross-compilation.html">Cross compilation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/module-system/index.html">Module system</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/module-system/a-basic-module/index.html">1. A basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/module-system/deep-dive.html">2. Module system deep dive</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/tutorials/nixos/index.html">NixOS</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/nixos-configuration-on-vm.html">NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/building-bootable-iso-image.html">Building a bootable ISO image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/building-and-running-docker-images.html">Building and running Docker images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/integration-testing-using-virtual-machines.html">Integration testing with NixOS virtual machines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/provisioning-remote-machines.html">Provisioning remote machines via SSH</a></li>
+
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/installing-nixos-on-a-raspberry-pi.html">Installing NixOS on a Raspberry Pi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/deploying-nixos-using-terraform.html">Deploying NixOS using Terraform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/binary-cache-setup.html">Setting up an HTTP binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/tutorials/nixos/distributed-builds-setup.html">Setting up distributed builds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/guides/index.html">Guides</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/guides/recipes/index.html">Recipes</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/add-binary-cache.html">Configure Nix to use a custom binary cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/direnv.html">Automatic environments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/sharing-dependencies.html">Dependencies in the development shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/dependency-management.html">Managing remote sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/python-environment.html">Python development environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/post-build-hook.html">Setting up post-build hooks</a></li>
+
+
+
+
+
+
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/guides/recipes/continuous-integration-github-actions.html">Continuous integration with GitHub Actions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/best-practices.html">Best practices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/guides/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/reference/index.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/reference/glossary.html">Glossary</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/reference/nix-manual.html">Nix reference manual</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/development/">Nix pre-release (development)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/latest/">Nix @nix-latest@ (latest)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/rolling/">Nix @nix-rolling@ (in Nixpkgs rolling)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/stable/">Nix @nix-stable@ (in Nixpkgs @nixpkgs-stable@)</a></li>
+<li class="toctree-l4"><a class="reference external" href="https://nix.dev/manual/nix/prev-stable/">Nix @nix-prev-stable@ (in Nixpkgs @nixpkgs-prev-stable@)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixpkgs/stable/">Nixpkgs manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://nixos.org/manual/nixos/stable/">NixOS manual</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/">Community projects</a></li>
+<li class="toctree-l3"><a class="reference external" href="https://github.com/nix-community/awesome-nix">Support tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/recommended-reading.html">Further reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/reference/pinning-nixpkgs.html">Pinning Nixpkgs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/concepts/index.html">Concepts</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/concepts/flakes.html">Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/concepts/faq.html">Frequently Asked Questions</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/flakes/index.html">Flakes</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/flakes/flake_intro.html">Introduction to Flakes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/flakes/flake_getting_start.html">Getting Start</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/contributing/index.html">Contributing</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/contributing/how-to-contribute.html">How to contribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/contributing/how-to-get-help.html">How to get help</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../nix/contributing/documentation/index.html">Contributing documentation</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/resources.html">Documentation resources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/diataxis.html">Documentation framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/style-guide.html">Style guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../nix/contributing/documentation/writing-a-tutorial.html">How to write a tutorial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../nix/acknowledgments/index.html">Acknowledgements</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../nix/acknowledgments/sponsors.html">Sponsors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../wiki/index.html">Wiki</a><input checked class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/0-drm/drm.html">DRM介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/1-nix_with_glibc_compile_error/nix_with_glibc_compile_error.html">Nix打包项目时遇到Cannot find stdlib.h</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/2-nix_golang_get_proxy_connection_refused/nix_golang_get_proxy_connection_refused.html">使用Nix打包Golang项目时报出错误<code class="docutils literal notranslate"><span class="pre">Connection</span> <span class="pre">Refused</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/3-perf_event_open/perf_event_open.html">perf_event_open 函数介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/4-compile_v4.x_undefined_ilog2_NaN/compile_v4.x_undefined_ilog2_NaN.html">在编译linux内核v4.x错误undefined reference to `____ilog2_NaN’</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/5-compile_linux_modules/compile_linux_modules.html">如何编译Linux的全部模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/6-specific_keyring_file_not_found/specific_keyring_file_not_found.html">编译时遇到specified keyring file xxx not found</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/7-cannot_insert_hardware_breakpoint/cannot_insert_hardware_breakpoint.html">Cannot insert hardware breakpoint 11:Remote failure reply: 22.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../wiki/8-employ-own-overleaf/employ_own_overleaf.html">部署自己的Overleaf</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/KilluaYZ/Kernel-Fuzzing-Tutorial/issues/new?title=Issue%20on%20page%20%2Fkernel/linux/tutorial/build_image/build_image.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../../../_sources/kernel/linux/tutorial/build_image/build_image.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>如何制作简单的Linux系统镜像</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">介绍</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-image-sh"><code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code> 使用说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">概述</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">环境要求</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">脚本获取&amp;依赖安装</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">使用方法</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">基本用法</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">选项说明</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">示例</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">脚本参数</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">脚本流程</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">注意事项</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">脚本内容</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ubuntu">从Ubuntu官网下载镜像</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rawqcow2">如何将raw格式的镜像转为qcow2格式</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">raw与qcow2的区别</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">1. <strong>文件格式和结构</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">2. <strong>性能表现</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">3. <strong>文件大小和存储效率</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">4. <strong>功能特性</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">5. <strong>适用场景</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">总结</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id20">无需扩容</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id21">需要扩容</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#qcow2">步骤1：新建qcow2镜像</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id22">步骤2: 挂载镜像</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">步骤3: 拷贝信息</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id24">步骤4: 卸载挂载点</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="linux">
+<h1>如何制作简单的Linux系统镜像<a class="headerlink" href="#linux" title="Permalink to this heading">#</a></h1>
+<blockquote>
+<div><p>参考文章：</p>
+<p><a class="reference external" href="https://www.jeanleo.com/?p=251">https://www.jeanleo.com/?p=251</a></p>
+</div></blockquote>
+<section id="id1">
+<h2>介绍<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<p>我们在启动Linux之前，需要制作一个系统镜像，这个镜像可以是Ubuntu这类带有用户界面，包数量众多的庞大镜像，也可以是非常小，仅有基本包和文件结构的最小化系统镜像。我们在Kernel Fuzzing的时候，一般不会选择太过庞大的镜像，因为那会儿带来不必要的资源开销。所以本文主要介绍的就是最小化系统镜像的构建。</p>
+</section>
+<section id="create-image-sh">
+<h2><code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code> 使用说明<a class="headerlink" href="#create-image-sh" title="Permalink to this heading">#</a></h2>
+<p>我们可以使用<code class="docutils literal notranslate"><span class="pre">debootstrap</span></code>这个工具自行构建镜像，但是那样做往往太慢了。更好的做法就是避免重复造轮子，使用已有的<code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code>脚本。</p>
+<section id="id2">
+<h3>概述<a class="headerlink" href="#id2" title="Permalink to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code>脚本用于创建一个最小化的Debian Linux镜像，是syzkaller中的一部分。该脚本通过一系列步骤，包括使用<code class="docutils literal notranslate"><span class="pre">debootstrap</span></code>工具、配置系统设置以及添加必要的软件包，来构建一个可引导的Linux系统镜像。</p>
+</section>
+<section id="id3">
+<h3>环境要求<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>操作系统</strong>：脚本应在支持<code class="docutils literal notranslate"><span class="pre">debootstrap</span></code>和<code class="docutils literal notranslate"><span class="pre">chroot</span></code>的Linux系统上运行。</p></li>
+<li><p><strong>依赖项</strong>：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">debootstrap</span></code>：用于创建新的Debian系统。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">qemu-user-static</span></code>：如果目标架构与主机架构不同，则需要相应的静态二进制文件。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sudo</span></code>：用于执行需要超级用户权限的操作。</p></li>
+<li><p>其他工具：如<code class="docutils literal notranslate"><span class="pre">ssh-keygen</span></code>、<code class="docutils literal notranslate"><span class="pre">dd</span></code>、<code class="docutils literal notranslate"><span class="pre">mkfs.ext4</span></code>等。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id4">
+<h3>脚本获取&amp;依赖安装<a class="headerlink" href="#id4" title="Permalink to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span><span class="nv">$IMAGE</span><span class="w"> </span><span class="c1">## 创建自定义目录</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$IMAGE</span>/
+wget<span class="w"> </span>https://raw.githubusercontent.com/google/syzkaller/master/tools/create-image.sh<span class="w"> </span>-O<span class="w"> </span>create-image.sh
+chmod<span class="w"> </span>+x<span class="w"> </span>create-image.sh
+</pre></div>
+</div>
+<p>执行脚本之前，需要下载安装这个脚本所依赖的软件包：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>debootstrap
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>使用方法<a class="headerlink" href="#id5" title="Permalink to this heading">#</a></h3>
+<section id="id6">
+<h4>基本用法<a class="headerlink" href="#id6" title="Permalink to this heading">#</a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./create-image.sh<span class="w"> </span><span class="o">[</span>选项...<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h4>选项说明<a class="headerlink" href="#id7" title="Permalink to this heading">#</a></h4>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>选项</p></th>
+<th class="head"><p>长选项</p></th>
+<th class="head"><p>描述</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-h</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--help</span></code></p></td>
+<td><p>显示帮助信息并退出。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-a</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--arch</span></code></p></td>
+<td><p>设置目标架构（默认为当前主机架构）。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-d</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--distribution</span></code></p></td>
+<td><p>设置要创建的Debian发行版（默认为<code class="docutils literal notranslate"><span class="pre">bullseye</span></code>）。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-f</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--feature</span></code></p></td>
+<td><p>指定要安装的软件包功能集，可选值为<code class="docutils literal notranslate"><span class="pre">minimal</span></code>或<code class="docutils literal notranslate"><span class="pre">full</span></code>（默认为<code class="docutils literal notranslate"><span class="pre">minimal</span></code>）。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-s</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--seek</span></code></p></td>
+<td><p>设置镜像大小（以MB为单位），默认为2048MB（2GB）。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-p</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--add-perf</span></code></p></td>
+<td><p>启用此选项以添加perf支持。需要先设置环境变量<code class="docutils literal notranslate"><span class="pre">$KERNEL</span></code>。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id8">
+<h4>示例<a class="headerlink" href="#id8" title="Permalink to this heading">#</a></h4>
+<ol class="arabic">
+<li><p><strong>创建默认配置的镜像</strong>：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./create-image.sh
+</pre></div>
+</div>
+<p>这将创建一个基于当前主机架构的<code class="docutils literal notranslate"><span class="pre">bullseye</span></code>发行版的最小化Debian镜像，镜像大小为2GB。</p>
+</li>
+<li><p><strong>指定目标架构和发行版</strong>：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./create-image.sh<span class="w"> </span>-a<span class="w"> </span>arm64<span class="w"> </span>-d<span class="w"> </span>buster
+</pre></div>
+</div>
+</li>
+</ol>
+<p>通过以上说明，您可以根据需求使用<code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code>脚本创建适合的Debian Linux镜像。<code class="docutils literal notranslate"><span class="pre">buster</span></code>发行版的镜像。</p>
+<ol class="arabic" start="3">
+<li><p><strong>启用perf支持</strong>：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KERNEL</span><span class="o">=</span>/path/to/kernel/source<span class="w"> </span>./create-image.sh<span class="w"> </span>-p
+</pre></div>
+</div>
+<p>这将创建一个包含perf支持的镜像。需要先设置<code class="docutils literal notranslate"><span class="pre">$KERNEL</span></code>环境变量为内核源码路径。</p>
+</li>
+</ol>
+</section>
+</section>
+<section id="id9">
+<h3>脚本参数<a class="headerlink" href="#id9" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">ARCH</span></code></strong>：目标架构，默认为当前主机架构。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">RELEASE</span></code></strong>：Debian发行版，默认为<code class="docutils literal notranslate"><span class="pre">bullseye</span></code>。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">FEATURE</span></code></strong>：功能集选项，默认为<code class="docutils literal notranslate"><span class="pre">minimal</span></code>。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">SEEK</span></code></strong>：镜像大小（MB），默认为2048。</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">PERF</span></code></strong>：是否启用perf支持，默认为<code class="docutils literal notranslate"><span class="pre">false</span></code>。</p></li>
+</ul>
+</section>
+<section id="id10">
+<h3>脚本流程<a class="headerlink" href="#id10" title="Permalink to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p><strong>解析命令行参数</strong>：脚本首先解析传入的命令行选项，并设置相应的变量。</p></li>
+<li><p><strong>架构处理</strong>：根据目标架构和主机架构，确定是否需要使用<code class="docutils literal notranslate"><span class="pre">qemu</span></code>静态二进制文件。</p></li>
+<li><p><strong>软件包安装</strong>：根据选择的功能集，安装必要的软件包。</p></li>
+<li><p><strong>系统配置</strong>：配置系统设置，包括网络接口、文件系统挂载点、SSH密钥等。</p></li>
+<li><p><strong>镜像创建</strong>：使用<code class="docutils literal notranslate"><span class="pre">dd</span></code>和<code class="docutils literal notranslate"><span class="pre">mkfs.ext4</span></code>创建磁盘镜像，并将系统文件复制到镜像中。</p></li>
+</ol>
+</section>
+<section id="id11">
+<h3>注意事项<a class="headerlink" href="#id11" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p>如果目标架构与主机架构不同，需要确保已安装相应的<code class="docutils literal notranslate"><span class="pre">qemu-user-static</span></code>包，并且相应的<code class="docutils literal notranslate"><span class="pre">binfmt</span></code>条目存在。</p></li>
+<li><p>当启用perf支持时，需要先设置<code class="docutils literal notranslate"><span class="pre">$KERNEL</span></code>环境变量为内核源码路径。</p></li>
+<li><p>脚本运行需要超级用户权限，部分操作可能需要使用<code class="docutils literal notranslate"><span class="pre">sudo</span></code>。</p></li>
+</ul>
+</section>
+<section id="id12">
+<h3>脚本内容<a class="headerlink" href="#id12" title="Permalink to this heading">#</a></h3>
+<p>如果你无法从互联网下载该脚本，可以尝试直接从下面复制：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!env bash</span>
+<span class="c1"># Copyright 2016 syzkaller project authors. All rights reserved.</span>
+<span class="c1"># Use of this source code is governed by Apache 2 LICENSE that can be found in the LICENSE file.</span>
+
+<span class="c1"># create-image.sh creates a minimal Debian Linux image suitable for syzkaller.</span>
+
+<span class="nb">set</span><span class="w"> </span>-eux
+
+<span class="c1"># Create a minimal Debian distribution in a directory.</span>
+<span class="nv">PREINSTALL_PKGS</span><span class="o">=</span>openssh-server,curl,tar,gcc,libc6-dev,time,strace,sudo,less,psmisc,selinux-utils,policycoreutils,checkpolicy,selinux-policy-default,firmware-atheros,debian-ports-archive-keyring
+
+<span class="c1"># If ADD_PACKAGE is not defined as an external environment variable, use our default packages</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="si">${</span><span class="nv">ADD_PACKAGE</span><span class="p">+x</span><span class="si">}</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nv">ADD_PACKAGE</span><span class="o">=</span><span class="s2">&quot;make,sysbench,git,vim,tmux,usbutils,tcpdump&quot;</span>
+<span class="k">fi</span>
+
+<span class="c1"># Variables affected by options</span>
+<span class="nv">ARCH</span><span class="o">=</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span>
+<span class="nv">RELEASE</span><span class="o">=</span>bullseye
+<span class="nv">FEATURE</span><span class="o">=</span>minimal
+<span class="nv">SEEK</span><span class="o">=</span><span class="m">2047</span>
+<span class="nv">PERF</span><span class="o">=</span><span class="nb">false</span>
+
+<span class="c1"># Display help function</span>
+display_help<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Usage: </span><span class="nv">$0</span><span class="s2"> [option...] &quot;</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+<span class="w">    </span><span class="nb">echo</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;   -a, --arch                 Set architecture&quot;</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;   -d, --distribution         Set on which debian distribution to create&quot;</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;   -f, --feature              Check what packages to install in the image, options are minimal, full&quot;</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;   -s, --seek                 Image size (MB), default 2048 (2G)&quot;</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;   -h, --help                 Display help message&quot;</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;   -p, --add-perf             Add perf support with this option enabled. Please set envrionment variable \$KERNEL at first&quot;</span>
+<span class="w">    </span><span class="nb">echo</span>
+<span class="o">}</span>
+
+<span class="k">while</span><span class="w"> </span>true<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$#</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="k">then</span>
+<span class="w">	</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$#</span>
+<span class="w">	</span><span class="nb">break</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">in</span>
+<span class="w">        </span>-h<span class="w"> </span><span class="p">|</span><span class="w"> </span>--help<span class="o">)</span>
+<span class="w">            </span>display_help
+<span class="w">            </span><span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>-a<span class="w"> </span><span class="p">|</span><span class="w"> </span>--arch<span class="o">)</span>
+<span class="w">	    </span><span class="nv">ARCH</span><span class="o">=</span><span class="nv">$2</span>
+<span class="w">            </span><span class="nb">shift</span><span class="w"> </span><span class="m">2</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>-d<span class="w"> </span><span class="p">|</span><span class="w"> </span>--distribution<span class="o">)</span>
+<span class="w">	    </span><span class="nv">RELEASE</span><span class="o">=</span><span class="nv">$2</span>
+<span class="w">            </span><span class="nb">shift</span><span class="w"> </span><span class="m">2</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>-f<span class="w"> </span><span class="p">|</span><span class="w"> </span>--feature<span class="o">)</span>
+<span class="w">	    </span><span class="nv">FEATURE</span><span class="o">=</span><span class="nv">$2</span>
+<span class="w">            </span><span class="nb">shift</span><span class="w"> </span><span class="m">2</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>-s<span class="w"> </span><span class="p">|</span><span class="w"> </span>--seek<span class="o">)</span>
+<span class="w">	    </span><span class="nv">SEEK</span><span class="o">=</span><span class="k">$((</span><span class="nv">$2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="m">1</span><span class="k">))</span>
+<span class="w">            </span><span class="nb">shift</span><span class="w"> </span><span class="m">2</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>-p<span class="w"> </span><span class="p">|</span><span class="w"> </span>--add-perf<span class="o">)</span>
+<span class="w">	    </span><span class="nv">PERF</span><span class="o">=</span><span class="nb">true</span>
+<span class="w">            </span><span class="nb">shift</span><span class="w"> </span><span class="m">1</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>-*<span class="o">)</span>
+<span class="w">            </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Error: Unknown option: </span><span class="nv">$1</span><span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+<span class="w">            </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">        </span>*<span class="o">)</span><span class="w">  </span><span class="c1"># No more options</span>
+<span class="w">            </span><span class="nb">break</span>
+<span class="w">            </span><span class="p">;;</span>
+<span class="w">    </span><span class="k">esac</span>
+<span class="k">done</span>
+
+<span class="c1"># Handle cases where qemu and Debian use different arch names</span>
+<span class="k">case</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ARCH</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">in</span>
+<span class="w">    </span>ppc64le<span class="o">)</span>
+<span class="w">        </span><span class="nv">DEBARCH</span><span class="o">=</span>ppc64el
+<span class="w">        </span><span class="p">;;</span>
+<span class="w">    </span>aarch64<span class="o">)</span>
+<span class="w">        </span><span class="nv">DEBARCH</span><span class="o">=</span>arm64
+<span class="w">        </span><span class="p">;;</span>
+<span class="w">    </span>arm<span class="o">)</span>
+<span class="w">        </span><span class="nv">DEBARCH</span><span class="o">=</span>armel
+<span class="w">        </span><span class="p">;;</span>
+<span class="w">    </span>x86_64<span class="o">)</span>
+<span class="w">        </span><span class="nv">DEBARCH</span><span class="o">=</span>amd64
+<span class="w">        </span><span class="p">;;</span>
+<span class="w">    </span>*<span class="o">)</span>
+<span class="w">        </span><span class="nv">DEBARCH</span><span class="o">=</span><span class="nv">$ARCH</span>
+<span class="w">        </span><span class="p">;;</span>
+<span class="k">esac</span>
+
+<span class="c1"># Foreign architecture</span>
+
+<span class="nv">FOREIGN</span><span class="o">=</span><span class="nb">false</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$ARCH</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="c1"># i386 on an x86_64 host is exempted, as we can run i386 binaries natively</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$ARCH</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">&quot;i386&quot;</span><span class="w"> </span>-o<span class="w"> </span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">&quot;x86_64&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span><span class="nv">FOREIGN</span><span class="o">=</span><span class="nb">true</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="k">fi</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$FOREIGN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="c1"># Check for according qemu static binary</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>which<span class="w"> </span>qemu-<span class="nv">$ARCH</span>-static<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Please install qemu static binary for architecture </span><span class="nv">$ARCH</span><span class="s2"> (package &#39;qemu-user-static&#39; on Debian/Ubuntu/Fedora)&quot;</span>
+<span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="w">    </span><span class="c1"># Check for according binfmt entry</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>!<span class="w"> </span>-r<span class="w"> </span>/proc/sys/fs/binfmt_misc/qemu-<span class="nv">$ARCH</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;binfmt entry /proc/sys/fs/binfmt_misc/qemu-</span><span class="nv">$ARCH</span><span class="s2"> does not exist&quot;</span>
+<span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">    </span><span class="k">fi</span>
+<span class="k">fi</span>
+
+<span class="c1"># Double check KERNEL when PERF is enabled</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$PERF</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="si">${</span><span class="nv">KERNEL</span><span class="p">+x</span><span class="si">}</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Please set KERNEL environment variable when PERF is enabled&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="k">fi</span>
+
+<span class="c1"># If full feature is chosen, install more packages</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$FEATURE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;full&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nv">PREINSTALL_PKGS</span><span class="o">=</span><span class="nv">$PREINSTALL_PKGS</span><span class="s2">&quot;,&quot;</span><span class="nv">$ADD_PACKAGE</span>
+<span class="k">fi</span>
+
+<span class="nv">DIR</span><span class="o">=</span><span class="nv">$RELEASE</span>
+sudo<span class="w"> </span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="nv">$DIR</span>
+sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$DIR</span>
+sudo<span class="w"> </span>chmod<span class="w"> </span><span class="m">0755</span><span class="w"> </span><span class="nv">$DIR</span>
+
+<span class="c1"># 1. debootstrap stage</span>
+
+<span class="nv">DEBOOTSTRAP_PARAMS</span><span class="o">=</span><span class="s2">&quot;--arch=</span><span class="nv">$DEBARCH</span><span class="s2"> --include=</span><span class="nv">$PREINSTALL_PKGS</span><span class="s2"> --components=main,contrib,non-free,non-free-firmware </span><span class="nv">$RELEASE</span><span class="s2"> </span><span class="nv">$DIR</span><span class="s2">&quot;</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$FOREIGN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nv">DEBOOTSTRAP_PARAMS</span><span class="o">=</span><span class="s2">&quot;--foreign </span><span class="nv">$DEBOOTSTRAP_PARAMS</span><span class="s2">&quot;</span>
+<span class="k">fi</span>
+
+<span class="c1"># riscv64 is hosted in the debian-ports repository</span>
+<span class="c1"># debian-ports doesn&#39;t include non-free, so we exclude firmware-atheros</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$DEBARCH</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;riscv64&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nv">DEBOOTSTRAP_PARAMS</span><span class="o">=</span><span class="s2">&quot;--keyring /usr/share/keyrings/debian-ports-archive-keyring.gpg --exclude firmware-atheros </span><span class="nv">$DEBOOTSTRAP_PARAMS</span><span class="s2"> http://deb.debian.org/debian-ports&quot;</span>
+<span class="k">fi</span>
+
+<span class="c1"># debootstrap may fail for EoL Debian releases</span>
+<span class="nv">RET</span><span class="o">=</span><span class="m">0</span>
+sudo<span class="w"> </span>--preserve-env<span class="o">=</span>http_proxy,https_proxy,ftp_proxy,no_proxy<span class="w"> </span>debootstrap<span class="w"> </span><span class="nv">$DEBOOTSTRAP_PARAMS</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nv">RET</span><span class="o">=</span><span class="nv">$?</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$RET</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$DEBARCH</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">&quot;riscv64&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="c1"># Try running debootstrap again using the Debian archive</span>
+<span class="w">    </span><span class="nv">DEBOOTSTRAP_PARAMS</span><span class="o">=</span><span class="s2">&quot;--keyring /usr/share/keyrings/debian-archive-removed-keys.gpg </span><span class="nv">$DEBOOTSTRAP_PARAMS</span><span class="s2"> https://archive.debian.org/debian-archive/debian/&quot;</span>
+<span class="w">    </span>sudo<span class="w"> </span>--preserve-env<span class="o">=</span>http_proxy,https_proxy,ftp_proxy,no_proxy<span class="w"> </span>debootstrap<span class="w"> </span><span class="nv">$DEBOOTSTRAP_PARAMS</span>
+<span class="k">fi</span>
+
+<span class="c1"># 2. debootstrap stage: only necessary if target != host architecture</span>
+
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$FOREIGN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>sudo<span class="w"> </span>cp<span class="w"> </span><span class="k">$(</span>which<span class="w"> </span>qemu-<span class="nv">$ARCH</span>-static<span class="k">)</span><span class="w"> </span><span class="nv">$DIR</span>/<span class="k">$(</span>which<span class="w"> </span>qemu-<span class="nv">$ARCH</span>-static<span class="k">)</span>
+<span class="w">    </span>sudo<span class="w"> </span>chroot<span class="w"> </span><span class="nv">$DIR</span><span class="w"> </span>/bin/bash<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;/debootstrap/debootstrap --second-stage&quot;</span>
+<span class="k">fi</span>
+
+<span class="c1"># Set some defaults and enable promtless ssh to the machine for root.</span>
+sudo<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;/^root/ { s/:x:/::/ }&#39;</span><span class="w"> </span><span class="nv">$DIR</span>/etc/passwd
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;T0:23:respawn:/sbin/getty -L ttyS0 115200 vt100&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/inittab
+<span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;\nauto eth0\niface eth0 inet dhcp\n&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/network/interfaces
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;/dev/root / ext4 defaults 0 0&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/fstab
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;debugfs /sys/kernel/debug debugfs defaults 0 0&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/fstab
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;securityfs /sys/kernel/security securityfs defaults 0 0&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/fstab
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;configfs /sys/kernel/config/ configfs defaults 0 0&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/fstab
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;binfmt_misc /proc/sys/fs/binfmt_misc binfmt_misc defaults 0 0&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/fstab
+<span class="nb">echo</span><span class="w"> </span>-en<span class="w"> </span><span class="s2">&quot;127.0.0.1\tlocalhost\n&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span><span class="nv">$DIR</span>/etc/hosts
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;nameserver 8.8.8.8&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/resolv.conf
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;syzkaller&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span><span class="nv">$DIR</span>/etc/hostname
+ssh-keygen<span class="w"> </span>-f<span class="w"> </span><span class="nv">$RELEASE</span>.id_rsa<span class="w"> </span>-t<span class="w"> </span>rsa<span class="w"> </span>-N<span class="w"> </span><span class="s1">&#39;&#39;</span>
+sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$DIR</span>/root/.ssh/
+cat<span class="w"> </span><span class="nv">$RELEASE</span>.id_rsa.pub<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span><span class="nv">$DIR</span>/root/.ssh/authorized_keys
+
+<span class="c1"># Add perf support</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$PERF</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;true&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span>cp<span class="w"> </span>-r<span class="w"> </span><span class="nv">$KERNEL</span><span class="w"> </span><span class="nv">$DIR</span>/tmp/
+<span class="w">    </span><span class="nv">BASENAME</span><span class="o">=</span><span class="k">$(</span>basename<span class="w"> </span><span class="nv">$KERNEL</span><span class="k">)</span>
+<span class="w">    </span>sudo<span class="w"> </span>chroot<span class="w"> </span><span class="nv">$DIR</span><span class="w"> </span>/bin/bash<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;apt-get update; apt-get install -y flex bison python-dev libelf-dev libunwind8-dev libaudit-dev libslang2-dev libperl-dev binutils-dev liblzma-dev libnuma-dev&quot;</span>
+<span class="w">    </span>sudo<span class="w"> </span>chroot<span class="w"> </span><span class="nv">$DIR</span><span class="w"> </span>/bin/bash<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;cd /tmp/</span><span class="nv">$BASENAME</span><span class="s2">/tools/perf/; make&quot;</span>
+<span class="w">    </span>sudo<span class="w"> </span>chroot<span class="w"> </span><span class="nv">$DIR</span><span class="w"> </span>/bin/bash<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;cp /tmp/</span><span class="nv">$BASENAME</span><span class="s2">/tools/perf/perf /usr/bin/&quot;</span>
+<span class="w">    </span>rm<span class="w"> </span>-r<span class="w"> </span><span class="nv">$DIR</span>/tmp/<span class="nv">$BASENAME</span>
+<span class="k">fi</span>
+
+<span class="c1"># Add udev rules for custom drivers.</span>
+<span class="c1"># Create a /dev/vim2m symlink for the device managed by the vim2m driver</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;ATTR{name}==&quot;vim2m&quot;, SYMLINK+=&quot;vim2m&quot;&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/etc/udev/rules.d/50-udev-default.rules
+
+<span class="c1"># Build a disk image</span>
+dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>/dev/zero<span class="w"> </span><span class="nv">of</span><span class="o">=</span><span class="nv">$RELEASE</span>.img<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>1M<span class="w"> </span><span class="nv">seek</span><span class="o">=</span><span class="nv">$SEEK</span><span class="w"> </span><span class="nv">count</span><span class="o">=</span><span class="m">1</span>
+sudo<span class="w"> </span>mkfs.ext4<span class="w"> </span>-F<span class="w"> </span><span class="nv">$RELEASE</span>.img
+sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/mnt/<span class="nv">$DIR</span>
+sudo<span class="w"> </span>mount<span class="w"> </span>-o<span class="w"> </span>loop<span class="w"> </span><span class="nv">$RELEASE</span>.img<span class="w"> </span>/mnt/<span class="nv">$DIR</span>
+sudo<span class="w"> </span>cp<span class="w"> </span>-a<span class="w"> </span><span class="nv">$DIR</span>/.<span class="w"> </span>/mnt/<span class="nv">$DIR</span>/.
+sudo<span class="w"> </span>umount<span class="w"> </span>/mnt/<span class="nv">$DIR</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="ubuntu">
+<h2>从Ubuntu官网下载镜像<a class="headerlink" href="#ubuntu" title="Permalink to this heading">#</a></h2>
+<p>除了使用<code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code>之外，比较熟悉Ubuntu的朋友们也可以从Ubuntu官网下载镜像</p>
+<p><a class="reference external" href="https://cdimage.ubuntu.com/cdimage/ubuntu-base/releases/20.04/release/">https://cdimage.ubuntu.com/cdimage/ubuntu-base/releases/20.04/release/</a></p>
+<p><img alt="" src="../../../../_images/1.png" /></p>
+<p>这里我们选择下载<code class="docutils literal notranslate"><span class="pre">ubuntu-base-20.04.1-base-amd64.tar.gz</span></code>，这是一个基础的文件系统目录结构和一些通用配置文件。
+我们还需下载安装其他软件才能将系统运行起来。</p>
+<p>创建一个镜像文件，因为我们还需要安装其他软件，所以选择创建了2G大小的镜像，这个根据实际需求来就好</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">dd if=/dev/zero of=rootfs.img bs=2048 count=1M</span>
+</pre></div>
+</div>
+<p>接着对镜像进行格式化</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mkfs.ext4 -F -L linuxroot rootfs.img</span>
+</pre></div>
+</div>
+<p>然后将该镜像挂在到目录上</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mkdir /mnt/tmpdir</span>
+<span class="go">mount -o loop rootfs.img /mnt/tmpdir/</span>
+</pre></div>
+</div>
+<p>将下载下来的压缩包解压到镜像文件中</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">tar zxvf ubuntu-base-20.04-base-amd64.tar.gz -C /mnt/tmpdir/</span>
+</pre></div>
+</div>
+<p>挂载好后，我们需要往它上面安装软件，为了能够使用上apt命令去安装软件，因此需要在chroot切换根环境前，把所需的DNS配置及各种内存文件系统挂载上去。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cp /etc/resolv.conf /mnt/tmpdir/etc/</span>
+<span class="go">mount -t proc /proc /mnt/tmpdir/proc</span>
+<span class="go">mount -t sysfs /sys /mnt/tmpdir/sys</span>
+<span class="go">mount -o bind /dev /mnt/tmpdir/dev</span>
+<span class="go">mount -o bind /dev/pts /mnt/tmpdir/dev/pts</span>
+</pre></div>
+</div>
+<p>挂载好了之后，就可以切换根文件系统了</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">chroot /mnt/tmpdir</span>
+</pre></div>
+</div>
+<p>进入了rootfs文件系统中后，可以使用apt安装程序</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">apt update</span>
+<span class="go">apt install -y language-pack-en-base \</span>
+<span class="go">            sudo \</span>
+<span class="go">            ssh \</span>
+<span class="go">            net-tools \</span>
+<span class="go">            ethtool \</span>
+<span class="go">            wireless-tools \</span>
+<span class="go">            ifupdown \</span>
+<span class="go">            network-manager \</span>
+<span class="go">            iputils-ping \</span>
+<span class="go">            rsyslog \</span>
+<span class="go">            htop \</span>
+<span class="go">            vim \</span>
+<span class="go">            kmod</span>
+</pre></div>
+</div>
+<p>安装完之后，记得给root用户配置密码</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">passwd root</span>
+</pre></div>
+</div>
+<p>然后修改<code class="docutils literal notranslate"><span class="pre">hostname</span></code>，否则可能无法上网</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">echo &quot;guest_os&quot; &gt; /etc/hostname</span>
+</pre></div>
+</div>
+<p>修改<code class="docutils literal notranslate"><span class="pre">/etc/hosts</span></code>配置路由信息</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">127.0.0.1</span> <span class="n">localhost</span>
+<span class="mf">127.0.0.1</span> <span class="n">guest_os</span>
+</pre></div>
+</div>
+<p>新版的Ubuntu发行版中会使用到<code class="docutils literal notranslate"><span class="pre">netplan</span></code>来管理网络，以24.04为例，如果想要Guest OS可以上网，那么需要做到以下几步：</p>
+<ul>
+<li><p>启动qemu虚拟机的时候，命令行参数中需要有以下参数。我不是很懂这个的配置，所以就照猫画虎的抄了一下，如果你明白这个配置的细节，那么你可以修改配置。总之就是要添加一个网卡。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">netdev</span> <span class="n">user</span><span class="p">,</span><span class="nb">id</span><span class="o">=</span><span class="n">net0</span><span class="p">,</span><span class="n">hostfwd</span><span class="o">=</span><span class="n">tcp</span><span class="p">:</span><span class="mf">127.0.0.1</span><span class="p">:</span><span class="mi">10021</span><span class="o">-</span><span class="p">:</span><span class="mi">22</span> <span class="o">-</span><span class="n">device</span> <span class="n">virtio</span><span class="o">-</span><span class="n">net</span><span class="o">-</span><span class="n">pci</span><span class="p">,</span><span class="n">netdev</span><span class="o">=</span><span class="n">net0</span>
+<span class="c1"># 或者下面这个也行</span>
+<span class="o">-</span><span class="n">net</span> <span class="n">user</span><span class="p">,</span><span class="n">host</span><span class="o">=</span><span class="mf">10.0.2.10</span><span class="p">,</span><span class="n">hostfwd</span><span class="o">=</span><span class="n">tcp</span><span class="p">:</span><span class="mf">127.0.0.1</span><span class="p">:</span><span class="mi">10021</span><span class="o">-</span><span class="p">:</span><span class="mi">22</span> 
+<span class="o">-</span><span class="n">net</span> <span class="n">nic</span><span class="p">,</span><span class="n">model</span><span class="o">=</span><span class="n">e1000</span> 
+</pre></div>
+</div>
+</li>
+<li><p>配置<code class="docutils literal notranslate"><span class="pre">netplan</span></code>。具体来说，需要在<code class="docutils literal notranslate"><span class="pre">/etc/netplan/01-netcfg.yaml</span></code>下面添加配置（如果没有这个文件就新建一个）。这里我的网卡叫做<code class="docutils literal notranslate"><span class="pre">eth0</span></code>，如果不知道自己的网卡叫什么名字，可以用<code class="docutils literal notranslate"><span class="pre">ip</span> <span class="pre">a</span></code>展示一下。填写好该配置之后，执行一下<code class="docutils literal notranslate"><span class="pre">netplan</span> <span class="pre">apply</span></code>即可应用配置</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">network</span><span class="p">:</span><span class="w"> </span>
+<span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">ethernets</span><span class="p">:</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">eth0</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dhcp4</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">dhcp6</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">nameservers</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">addresses</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8.8.8.8</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1.1.1</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>到此为止，我们就已经成功配置了Guest OS的网络。</p>
+<p>配置已经结束了，接下来就可以卸载系统了</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">umount /mnt/tmpdir/proc/</span>
+<span class="go">umount /mnt/tmpdir/sys/</span>
+<span class="go">umount /mnt/tmpdir/dev/pts/</span>
+<span class="go">umount /mnt/tmpdir/dev/</span>
+<span class="go">umount /mnt/tmpdir/</span>
+</pre></div>
+</div>
+</section>
+<section id="rawqcow2">
+<h2>如何将raw格式的镜像转为qcow2格式<a class="headerlink" href="#rawqcow2" title="Permalink to this heading">#</a></h2>
+<p>通过<code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code>脚本，我们可以得到一个<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式的镜像，但是<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式的镜像有更好的灵活性和可伸缩性，所以我们可以通过以下方式将<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式的镜像转为<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式的镜像。</p>
+<section id="id13">
+<h3>raw与qcow2的区别<a class="headerlink" href="#id13" title="Permalink to this heading">#</a></h3>
+<p>在虚拟化环境中，镜像文件用于存储虚拟机的操作系统和数据。<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式和<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式是两种常见的镜像文件格式，它们在功能、性能和使用场景上有明显的区别：</p>
+<section id="id14">
+<h4>1. <strong>文件格式和结构</strong><a class="headerlink" href="#id14" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>raw格式</strong>：</p>
+<ul>
+<li><p><strong>结构简单</strong>：<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式是一种非常基础的镜像格式，它直接将磁盘数据以二进制形式存储，没有任何额外的元数据或格式化信息。</p></li>
+<li><p><strong>优点</strong>：由于没有额外的格式开销，<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式的镜像文件在读写操作上通常具有更高的性能，尤其是在顺序读写时。</p></li>
+<li><p><strong>缺点</strong>：文件大小固定，无法动态扩展，且不支持高级特性（如快照、压缩等）。</p></li>
+</ul>
+</li>
+<li><p><strong>qcow2格式</strong>：</p>
+<ul>
+<li><p><strong>结构复杂</strong>：<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>（QEMU Copy-On-Write v2）是一种高级的镜像格式，支持多种高级特性，如快照、压缩、稀疏存储等。</p></li>
+<li><p><strong>优点</strong>：文件大小可以动态扩展，支持快照功能（可以创建多个时间点的镜像状态），并且可以通过压缩技术减小文件体积。</p></li>
+<li><p><strong>缺点</strong>：由于需要处理额外的元数据和特性，<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式的镜像在读写性能上通常不如<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id15">
+<h4>2. <strong>性能表现</strong><a class="headerlink" href="#id15" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>raw格式</strong>：</p>
+<ul>
+<li><p><strong>读写性能高</strong>：由于没有额外的格式开销，<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式在顺序读写操作中通常具有更高的性能，适合对性能要求较高的场景。</p></li>
+<li><p><strong>随机读写性能也较好</strong>：在随机读写场景中，<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式的性能也较为稳定。</p></li>
+</ul>
+</li>
+<li><p><strong>qcow2格式</strong>：</p>
+<ul>
+<li><p><strong>读写性能较低</strong>：由于需要处理元数据和可能的压缩/解压缩操作，<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式在读写性能上通常不如<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式。</p></li>
+<li><p><strong>适合小文件读写</strong>：在处理大量小文件的随机读写时，<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式的性能可能更接近<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id16">
+<h4>3. <strong>文件大小和存储效率</strong><a class="headerlink" href="#id16" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>raw格式</strong>：</p>
+<ul>
+<li><p><strong>固定大小</strong>：<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式的镜像文件大小与虚拟磁盘的实际大小一致，即使磁盘中大部分空间未被使用，文件大小也不会减小。</p></li>
+<li><p><strong>存储效率低</strong>：如果虚拟磁盘中有大量未使用的空间，<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式会浪费存储资源。</p></li>
+</ul>
+</li>
+<li><p><strong>qcow2格式</strong>：</p>
+<ul>
+<li><p><strong>动态大小</strong>：<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式支持稀疏存储，文件大小会根据实际使用的空间动态增长，未使用的空间不会占用存储资源。</p></li>
+<li><p><strong>支持压缩</strong>：<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式可以通过压缩技术进一步减小文件体积，提高存储效率。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id17">
+<h4>4. <strong>功能特性</strong><a class="headerlink" href="#id17" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>raw格式</strong>：</p>
+<ul>
+<li><p><strong>功能简单</strong>：<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式不支持快照、压缩、动态扩展等高级特性。</p></li>
+</ul>
+</li>
+<li><p><strong>qcow2格式</strong>：</p>
+<ul>
+<li><p><strong>支持快照</strong>：可以创建多个时间点的镜像状态，方便回滚和版本管理。</p></li>
+<li><p><strong>支持动态扩展</strong>：镜像文件大小可以根据实际使用动态增长，无需提前分配固定大小。</p></li>
+<li><p><strong>支持压缩</strong>：可以通过压缩技术减小文件体积，节省存储空间。</p></li>
+<li><p><strong>支持加密</strong>：<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式支持对镜像文件进行加密，提高数据安全性。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id18">
+<h4>5. <strong>适用场景</strong><a class="headerlink" href="#id18" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>raw格式</strong>：</p>
+<ul>
+<li><p><strong>高性能需求</strong>：适合对性能要求较高的场景，例如数据库服务器、高性能计算等。</p></li>
+<li><p><strong>简单场景</strong>：适用于不需要快照、动态扩展等高级特性的场景。</p></li>
+</ul>
+</li>
+<li><p><strong>qcow2格式</strong>：</p>
+<ul>
+<li><p><strong>开发和测试</strong>：支持快照功能，方便在开发和测试环境中快速回滚到不同状态。</p></li>
+<li><p><strong>存储资源有限</strong>：动态扩展和压缩特性可以有效节省存储空间，适合存储资源有限的环境。</p></li>
+<li><p><strong>需要高级特性</strong>：如果需要使用加密、快照等功能，<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式是更好的选择。</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="id19">
+<h4>总结<a class="headerlink" href="#id19" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><strong>raw格式</strong>：简单、高性能，但功能有限，适合对性能要求高且不需要高级特性的场景。</p></li>
+<li><p><strong>qcow2格式</strong>：功能丰富，支持快照、动态扩展、压缩等特性，但性能稍低，适合需要高级功能或存储资源有限的场景。</p></li>
+</ul>
+</section>
+</section>
+<section id="id20">
+<h3>无需扩容<a class="headerlink" href="#id20" title="Permalink to this heading">#</a></h3>
+<p>如果无需扩容，则可以直接使用<code class="docutils literal notranslate"><span class="pre">qemu-img</span> <span class="pre">convert</span></code>命令进行转换。例如我现在有一个名为<code class="docutils literal notranslate"><span class="pre">buster.img</span></code>的镜像，我需要转为<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式，可以使用以下命令：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>qemu-img<span class="w"> </span>info<span class="w"> </span>./buster.img<span class="w">  </span>
+<span class="go">image: ./buster.img</span>
+<span class="go">file format: raw</span>
+<span class="go">virtual size: 2 GiB (2147483648 bytes)</span>
+<span class="go">disk size: 496 MiB</span>
+<span class="go">Child node &#39;/file&#39;:</span>
+<span class="go">    filename: ./buster.img</span>
+<span class="go">    protocol type: file</span>
+<span class="go">    file length: 2 GiB (2147483648 bytes)</span>
+<span class="go">    disk size: 496 MiB</span>
+
+<span class="gp">$ </span>qemu-img<span class="w"> </span>convert<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>-O<span class="w"> </span>qcow2<span class="w"> </span>-c<span class="w"> </span>buster.img<span class="w"> </span>buster.qcow2<span class="w"> </span>
+
+<span class="gp">$ </span>qemu-img<span class="w"> </span>info<span class="w"> </span>./buster.qcow2<span class="w"> </span>
+<span class="go">image: ./buster.qcow2</span>
+<span class="go">file format: qcow2</span>
+<span class="go">virtual size: 102 GiB (109521666048 bytes)</span>
+<span class="go">disk size: 395 MiB</span>
+<span class="go">cluster_size: 65536</span>
+<span class="go">Format specific information:</span>
+<span class="go">    compat: 1.1</span>
+<span class="go">    compression type: zlib</span>
+<span class="go">    lazy refcounts: false</span>
+<span class="go">    refcount bits: 16</span>
+<span class="go">    corrupt: false</span>
+<span class="go">    extended l2: false</span>
+<span class="go">Child node &#39;/file&#39;:</span>
+<span class="go">    filename: ./buster.qcow2</span>
+<span class="go">    protocol type: file</span>
+<span class="go">    file length: 400 MiB (419102720 bytes)</span>
+<span class="go">    disk size: 395 MiB</span>
+</pre></div>
+</div>
+<p>这样我们就将<code class="docutils literal notranslate"><span class="pre">raw</span></code>格式的镜像转成了<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>格式</p>
+</section>
+<section id="id21">
+<h3>需要扩容<a class="headerlink" href="#id21" title="Permalink to this heading">#</a></h3>
+<p>如果需要扩容，可以这样来做</p>
+<section id="qcow2">
+<h4>步骤1：新建qcow2镜像<a class="headerlink" href="#qcow2" title="Permalink to this heading">#</a></h4>
+<p>我们可以通过以下命令创建qcow2镜像，该镜像是空的。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>qemu-img<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>qcow2<span class="w"> </span>buster_512.qcow2<span class="w"> </span>512G
+
+<span class="gp">$ </span>qemu-img<span class="w"> </span>info<span class="w"> </span>./buster_512.qcow2<span class="w"> </span>
+<span class="go">image: ./buster_512.qcow2</span>
+<span class="go">file format: qcow2</span>
+<span class="go">virtual size: 512 GiB (549755813888 bytes)</span>
+<span class="go">disk size: 16.5 KiB</span>
+<span class="go">cluster_size: 65536</span>
+<span class="go">Format specific information:</span>
+<span class="go">    compat: 1.1</span>
+<span class="go">    compression type: zlib</span>
+<span class="go">    lazy refcounts: false</span>
+<span class="go">    refcount bits: 16</span>
+<span class="go">    corrupt: false</span>
+<span class="go">    extended l2: false</span>
+<span class="go">Child node &#39;/file&#39;:</span>
+<span class="go">    filename: ./buster_512.qcow2</span>
+<span class="go">    protocol type: file</span>
+<span class="go">    file length: 200 KiB (204800 bytes)</span>
+<span class="go">    disk size: 16.5 KiB</span>
+</pre></div>
+</div>
+</section>
+<section id="id22">
+<h4>步骤2: 挂载镜像<a class="headerlink" href="#id22" title="Permalink to this heading">#</a></h4>
+<p>首先要执行以下命令下载该工具：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo apt install qemu-utils nbd-client</span>
+</pre></div>
+</div>
+<p>然后加载nbd模块</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo modprobe nbd</span>
+</pre></div>
+</div>
+<p>将<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>镜像连接到<code class="docutils literal notranslate"><span class="pre">nbd</span></code>设备</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo qemu-nbd -c /dev/nbd0 your_image.qcow2</span>
+</pre></div>
+</div>
+<p>格式化<code class="docutils literal notranslate"><span class="pre">nbd</span></code>设备（其实也就是格式化qcow2镜像文件）</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo mkfs.ext4 /dev/nbd0</span>
+</pre></div>
+</div>
+<p>将<code class="docutils literal notranslate"><span class="pre">nbd</span></code>设备挂在到目录</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo mount /dev/nbd0 ./chroot-qcow2</span>
+</pre></div>
+</div>
+<p>将<code class="docutils literal notranslate"><span class="pre">raw</span></code>镜像挂在在另一个目录</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo mount -o loop buster.img ./chroot</span>
+</pre></div>
+</div>
+</section>
+<section id="id23">
+<h4>步骤3: 拷贝信息<a class="headerlink" href="#id23" title="Permalink to this heading">#</a></h4>
+<p>将<code class="docutils literal notranslate"><span class="pre">raw</span></code>镜像中的文件全部拷贝到<code class="docutils literal notranslate"><span class="pre">qcow2</span></code>镜像中</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo cp -a ./chroot/. ./chroot-qcow2/</span>
+</pre></div>
+</div>
+</section>
+<section id="id24">
+<h4>步骤4: 卸载挂载点<a class="headerlink" href="#id24" title="Permalink to this heading">#</a></h4>
+<p>最后再卸载挂载点</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp"># </span>卸载挂载点
+<span class="go">sudo umount -R ./chroot</span>
+<span class="go">sudo umount -R ./chroot-qcow2</span>
+
+<span class="gp"># </span>关闭nbd设备
+<span class="go">sudo qemu-nbd -d /dev/nbd0</span>
+</pre></div>
+</div>
+<p>这样就是得到了目标的镜像<code class="docutils literal notranslate"><span class="pre">buster_512.qcow2</span></code></p>
+<p>启动QEMU之后，可以在虚拟机中看到，我们的镜像确实被扩容成了512G：</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@syzkaller:~# </span>lsblk
+<span class="go">NAME      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span>
+<span class="go">sda         8:0    0  512G  0 disk /</span>
+<span class="go">sr0        11:0    1 1024M  0 rom  </span>
+<span class="go">mtdblock0  31:0    0  128K  0 disk </span>
+<span class="go">nullb0    250:0    0  250G  0 disk </span>
+<span class="gp">root@syzkaller:~# </span>df<span class="w"> </span>-h
+<span class="go">Filesystem      Size  Used Avail Use% Mounted on</span>
+<span class="go">/dev/root       503G  785M  477G   1% /</span>
+<span class="go">devtmpfs        692M     0  692M   0% /dev</span>
+<span class="go">tmpfs           705M     0  705M   0% /dev/shm</span>
+<span class="go">tmpfs           705M   11M  695M   2% /run</span>
+<span class="go">tmpfs           5.0M     0  5.0M   0% /run/lock</span>
+<span class="go">tmpfs           705M     0  705M   0% /sys/fs/cgroup</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../compile_run/compile_run.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Linux 内核的编译与运行</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../debug/debug_kernel.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Linux内核调试</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">介绍</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-image-sh"><code class="docutils literal notranslate"><span class="pre">create-image.sh</span></code> 使用说明</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">概述</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">环境要求</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">脚本获取&amp;依赖安装</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">使用方法</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">基本用法</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">选项说明</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">示例</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">脚本参数</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">脚本流程</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">注意事项</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">脚本内容</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ubuntu">从Ubuntu官网下载镜像</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rawqcow2">如何将raw格式的镜像转为qcow2格式</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">raw与qcow2的区别</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">1. <strong>文件格式和结构</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">2. <strong>性能表现</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id16">3. <strong>文件大小和存储效率</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">4. <strong>功能特性</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id18">5. <strong>适用场景</strong></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">总结</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id20">无需扩容</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id21">需要扩容</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#qcow2">步骤1：新建qcow2镜像</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id22">步骤2: 挂载镜像</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">步骤3: 拷贝信息</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id24">步骤4: 卸载挂载点</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Killuayz
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
